@@ -17,7 +17,8 @@ mixopt.objective <- function (L, w)
 
 # TO DO: Explain what this function does, and how to use it.
 # Refer to Extreme Deconvolution paper for EM algorithm.
-mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
+mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, drop.threshold = 1e-8,
+                       verbose = TRUE) {
 
   # Get the number of mixture components.
   k <- ncol(L)
@@ -83,4 +84,10 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
   fit <- list(L = L,w = w,err = err[1:iter],obj = obj[1:iter])
   class(fit) <- c("mixopt","list")
   return(fit)
+}
+
+# TO DO: Explain what this function does, and how to use it.
+# Refer to REBayes paper for formulation of dual problem.
+mixopt.dualip <- function () {
+
 }

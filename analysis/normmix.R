@@ -26,6 +26,8 @@ s <- c(0.01,10^(seq(-2,0,length.out = 39)))
 # ---------------------------
 # Load the data simulation functions, likelihood computation functions
 # and optimization algorithms into the R environment.
+library(ggplot2)
+library(cowplot)
 source("../code/datasim.R")
 source("../code/likelihood.R")
 source("../code/mixopt.R")
@@ -51,3 +53,32 @@ L <- condlikmatrix.norm(x,se,s)
 cat("Fitting model to data.\n")
 out <- system.time(fit.em <- mixopt.em(L))
 cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
+
+# PLOT OPTIMIZATION RESULTS
+# -------------------------
+
+# Show the maximum change in the mixture weights at each iteration of
+# the EM algorithm.
+numiter <- length(fit.em$err)
+p1 <- ggplot(data.frame(iter = 2:numiter,err = fit.em$err[-1]),
+                aes(x = iter,y = err)) +
+    geom_line(col = "darkorange",size = 1) + 
+    theme_cowplot(font_size = 10) +
+    labs(x     = "iteration",
+         y     = "max. change in solution",
+         title = "EM")
+
+# Show the value of the objective function at each iteration of the EM
+# algorithm.
+p2 <- ggplot(data.frame(iter = 1:(numiter - 1),
+                        y    = fit.em$obj[-numiter] - min(fit.em$obj)),
+                        aes(x = iter,y = y)) +
+    geom_line(col = "darkorange",size = 1) +
+    scale_y_log10() +
+    theme_cowplot(font_size = 10) +
+    labs(x     = "iteration",
+         y     = "distance from minimum",
+         title = "EM")
+
+plot_grid(p1,p2)
+
