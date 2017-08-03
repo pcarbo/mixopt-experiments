@@ -3,7 +3,8 @@
 
 # ANALYSIS PARAMETERS
 # -------------------
-n <- 1000  # Number of data samples.
+seed <- 1     # Random number generator seed.
+n    <- 5000  # Number of data samples.
 
 # The standard deviations and mixture weights used to simulate the
 # data. 
@@ -20,10 +21,13 @@ source("../code/mixopt.R")
 
 # GENERATE DATA SET
 # -----------------
+# Set the random number generator seed.
+set.seed(1)
+
 # Simulate a data set with n samples, in which the standard errors are ...
 cat(sprintf("Simulating data set with %d observations.\n",n))
 k  <- length(w)
-se <- rep(1,n)
+se <- rep(0.1,n)
 x  <- datasim.norm(w,s,se)
 
 # COMPUTE LIKELIHOOD MATRIX
@@ -34,4 +38,6 @@ L <- condlikmatrix.norm(x,se,s)
 
 # FIT MIXTURE MODEL
 # -----------------
-# TO DO.
+cat("Fitting model to data.\n")
+fit.em <- mixopt.em(L)
+
