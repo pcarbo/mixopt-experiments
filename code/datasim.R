@@ -11,12 +11,14 @@
 # samples, so it should be a vector of length n.
 datasim.norm <- function (w, s, se) {
 
-  # Get the number of samples to simulate.
+  # Get the number of mixture components (k) and the number of samples
+  # to simulate (n).
+  k <- length(w)
   n <- length(se)
     
   # Draw the source mixture component for each sample.
-  i <- sample(n = n,replace = TRUE,prob = w)
-
+  i <- sample(k,n,replace = TRUE,prob = w)
+  
   # Draw U for each sample.
   u <- rnorm(n = n,sd = s[i])
 
