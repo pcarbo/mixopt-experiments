@@ -1,47 +1,56 @@
-# This little script demonstrates the use the primal-dual interior-point
-# solver to compute a logistic regression model for predicting the binary
-# {0,1} outputs of a input vectors. It computes the set of parameters that
-# maximizes the likelihood (or minimizes the sum of squared errors), but
-# subject to a penalization on (otherwise known as the "Lasso" or "Basis
-# pursuit denoising"). The best way to understand what is going on here
-# is to go and read:
-#
-#    * Trevor Hastie, Robert Tibshirani and Jerome Friedman (2001). 
-#      The Elements of Statistical Learning. Springer.
-#
-#    * Scott S. Chen, David L. Donoho and Michael A. Saunders (2001). 
-#      Atomic Decomposition by Basis Pursuit. SIAM Review, Vol. 43, 
-#      No. 1. (2001), pp. 129-159.
-#
-# The computed solution should be fairly close to the "true" regression
-# coefficients (beta).
+# Demonstration of the primal-dual interior-point solver for fitting a
+# logistic regression model. It computes estimates of the regression
+# coefficients subject to an L1 penalization ("Lasso").
 
-% CREATE DATA SET.
-% Generate the input vectors from the standard normal, and generate the
-% binary responses from the regression with some additional noise, and then
-% transform the results using the logistic function. The variable "beta" is
-% the set of true regression coefficients of length m.
-n       = 100;   % The number of training examples.
-epsilon = 0.25;  % Standard deviation in noise of outputs.
-beta    = [ 0  0 2 -4 0 0 -1 3 ]';         % True regression coefficients.
-sigma   = [ 10 1 1  1 1 1  1 1 ]';         % Standard deviation of coord's.
-m       = length(beta);                    % Number of dimensions/features.
-A       = repmat(sigma',n,1).*randn(n,m);  % The n x m matrix of examples.
-noise   = epsilon*randn(n,1);              % Noise in outputs.
-y       = rand(n,1) < logit(A*beta+noise); % The binary outputs.
+# SCRIPT PARAMETERS
+# -----------------
+n      <- 1000  # Number of data examples.
+lambda <- 1/2   # L1 penalty strength.
 
-% COMPUTE SOLUTION WITH INTERIOR-POINT METHOD.
-% Compute the L1-regularized maximum likelihood estimator.
-lambda = 1/2;          % Level of L1 regularization (sparsity).
-P      = [A -A];
-x      = ones(2*m,1);  % The inital point.
-z      = ones(2*m,1);  % A dummy variable; does nothing.
-data   = { P y lambda };
-x      = ipsolver(x,@(x)logisticl1(x,z,data,'objective'),...
-		  @(x)logisticl1(x,z,data,'gradient'),...
-		  @(x)logisticl1(x,z,data,'constraints'),...
-		  @(x,z)logisticl1(x,z,data,'jacobian'),...
-		  'steepest',1e-4,100,true);
-w      = x(1:m) - x(m+1:end);
-fprintf('\nSolution:\n');
-disp(w);
+# Ground-truth regression coefficients.
+beta <- c(0,0,2,-4,0,0,-1,3) 
+
+# GENERATE DATA SET
+# -----------------
+# This function returns the sigmoid function at x.
+sigmoid <- function (x)
+  1/(1 + exp(-x))
+
+# Get the number of variables/features.
+cat("Generating data set.\n")
+p <- length(beta)
+X <- matrix(rnorm(n*p),n,p)
+y <- as.numeric(runif(n) < c(sigmoid(X %*% beta)))
+
+# FIT MODEL
+# ---------
+# This function computes the logistic loss function with a penalty
+# term given by the L1 norm of the regression coefficients. Here, it
+# is assumed that the regression coefficients w are split into the
+# positive and negative components so that all entries of w are
+# positive. Argument a is the L1 penalty strength.
+logisticl1.obj <- function (X, y, w, a) {
+  u <- c(sigmoid(X %*% w))
+  return(a*sum(w) - sum(y*log(u) + (1 - y)*log(1 - u)))
+}
+
+# This function computes 
+logisticl1.grad <- function (X, y, w, a) {
+  u <- c(sigmoid(X %*% w))
+  return(g = c(t(X) %*% (y - u)) + a,
+         H = t(X) %*% diag(u*(1 - u)) %*% X)
+}
+
+# Estimate the regression coeffiicents subject to an L1 penalty.
+## P      = [A -A];
+## x      = ones(2*m,1);  # The inital point.
+## z      = ones(2*m,1);  # A dummy variable; does nothing.
+## data   = { P y lambda };
+## x      = ipsolver(x,@(x)logisticl1(x,z,data,'objective'),...
+## 		  @(x)logisticl1(x,z,data,'gradient'),...
+## 		  @(x)logisticl1(x,z,data,'constraints'),...
+## 		  @(x,z)logisticl1(x,z,data,'jacobian'),...
+## 		  'steepest',1e-4,100,true);
+## w      = x(1:m) - x(m+1:end);
+## fprintf('\nSolution:\n');
+## disp(w);
