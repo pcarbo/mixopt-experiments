@@ -10,6 +10,10 @@ lambda <- 1/2   # L1 penalty strength.
 # Ground-truth regression coefficients.
 beta <- c(0,0,2,-4,0,0,-1,3) 
 
+# LOAD PACKAGES AND FUNCTIONS
+# ---------------------------
+source("../code/ipsolver.R")
+
 # GENERATE DATA SET
 # -----------------
 # This function returns the sigmoid function at x.
@@ -24,7 +28,7 @@ y <- as.numeric(runif(n) < c(sigmoid(X %*% beta)))
 
 # FIT MODEL
 # ---------
-# This function computes the logistic loss function with a penalty
+# This function returns the logistic loss function with a penalty
 # term given by the L1 norm of the regression coefficients. Here, it
 # is assumed that the regression coefficients w are split into the
 # positive and negative components so that all entries of w are
@@ -34,23 +38,20 @@ logisticl1.obj <- function (X, y, w, a) {
   return(a*sum(w) - sum(y*log(u) + (1 - y)*log(1 - u)))
 }
 
-# This function computes 
+# This function returns the gradient and Hessian of the L1-penalized
+# log-likelihood objective.
 logisticl1.grad <- function (X, y, w, a) {
   u <- c(sigmoid(X %*% w))
-  return(g = c(t(X) %*% (y - u)) + a,
-         H = t(X) %*% diag(u*(1 - u)) %*% X)
+  return(list(g = c(t(X) %*% (y - u)) + a,
+              H = t(X) %*% diag(u*(1 - u)) %*% X))
 }
 
-# Estimate the regression coeffiicents subject to an L1 penalty.
-## P      = [A -A];
-## x      = ones(2*m,1);  # The inital point.
-## z      = ones(2*m,1);  # A dummy variable; does nothing.
-## data   = { P y lambda };
-## x      = ipsolver(x,@(x)logisticl1(x,z,data,'objective'),...
-## 		  @(x)logisticl1(x,z,data,'gradient'),...
-## 		  @(x)logisticl1(x,z,data,'constraints'),...
-## 		  @(x,z)logisticl1(x,z,data,'jacobian'),...
-## 		  'steepest',1e-4,100,true);
-## w      = x(1:m) - x(m+1:end);
-## fprintf('\nSolution:\n');
-## disp(w);
+# Minimize the penalized L1-penalized log-likelihood objective 
+A   <- rbind(X,-X)
+fit <- ipsolver(x      = rep(1,2*p),
+                obj    = function (w) logisticl1.obj(A,y,w,lambda),
+                grad   = function (w) logisticl1.grad(A,y,w,lambda),
+                constr = function (w) -w,
+                jac    = function (w) list(J = -diag(rep(1,p)),
+                                           W = matrix(0,p,p)))
+w  <- fit$w[1:p] - fit$w[-(1:p)]
