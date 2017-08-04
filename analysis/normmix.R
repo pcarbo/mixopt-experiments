@@ -30,6 +30,7 @@ library(ggplot2)
 library(cowplot)
 source("../code/datasim.R")
 source("../code/likelihood.R")
+source("../code/ipsolver.R")
 source("../code/mixopt.R")
 
 # GENERATE DATA SET
