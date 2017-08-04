@@ -61,11 +61,11 @@ cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
 # Show the maximum change in the mixture weights at each iteration of
 # the EM algorithm. Here, average r is the amount of time elapsed per
 # iteration.
-m  <- length(fit.em$err)
+m  <- length(fit.em$maxd)
 i  <- 2:(m-1)
 r  <- out["elapsed"] / m
-p1 <- ggplot(data.frame(time = r*i,err = fit.em$err[i]),
-             aes(x = time,y = err)) +
+p1 <- ggplot(data.frame(time = r*i,maxd = fit.em$maxd[i]),
+             aes(x = time,y = maxd)) +
     geom_line(col = "darkorange",size = 1) + 
     theme_cowplot(font_size = 10) +
     scale_y_log10() +

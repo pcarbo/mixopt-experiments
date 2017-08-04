@@ -27,9 +27,9 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, drop.threshold = 1e-8,
   if (missing(w))
     w <- rep(1/k,k)
     
-  # Initialize storage for outputs obj and err.
-  obj <- rep(0,maxiter)
-  err <- rep(0,maxiter)
+  # Initialize storage for outputs obj and maxd.
+  obj  <- rep(0,maxiter)
+  maxd <- rep(0,maxiter)
 
   # Compute the objective function value at the initial iterate.
   f <- mixopt.objective(L,w)
@@ -37,7 +37,7 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, drop.threshold = 1e-8,
   # Repeat until convergence criterion is met, or until the maximum
   # number of iterations is reached.
   if (verbose)
-    cat("iter     objective     error\n")
+    cat("iter     objective max delta\n")
   for (iter in 2:maxiter) {
 
     # Save the current estimate of the mixture weights and the current
@@ -62,26 +62,26 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, drop.threshold = 1e-8,
     # criterion. Convergence is reached when the maximum difference
     # between the mixture weights at two successive iterations is less
     # than the specified tolerance, or when objective increases.
-    err[iter] <- max(abs(w - w0))
-    obj[iter] <- f
+    maxd[iter] <- max(abs(w - w0))
+    obj[iter]  <- f
     if (verbose) {
-      progress.str <- sprintf("%4d %+0.6e %0.3e",iter,f,err[iter])
+      progress.str <- sprintf("%4d %+0.6e %0.3e",iter,f,maxd[iter])
       cat(progress.str)
       cat(rep("\r",nchar(progress.str)))
     }
     if (f > f0) {
-      err[iter] <- 0
-      obj[iter] <- f0
-      w         <- w0
+      maxd[iter] <- 0
+      obj[iter]  <- f0
+      w          <- w0
       break
-    } else if (err[iter] < tol)
+    } else if (maxd[iter] < tol)
       break
   }
   if (verbose)
     cat("\n")
   
   # Return the fitted model parameters and other optimization info. 
-  fit <- list(L = L,w = w,err = err[1:iter],obj = obj[1:iter])
+  fit <- list(L = L,w = w,maxd = maxd[1:iter],obj = obj[1:iter])
   class(fit) <- c("mixopt","list")
   return(fit)
 }

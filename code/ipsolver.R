@@ -92,12 +92,14 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
   z <- rep(1,nc)
   
   if (verbose)
-    cat("iter   objective   log(mu)  sigma   ||rx||   ||rc||   alpha  #ls\n")
+    cat(paste("iter   objective    error  log(mu)  sigma   ||rx||   ||rc||  ",
+              "alpha  #ls\n"))
   
   # Repeat while the convergence criterion has not been satisfied, and
   # we haven't reached the maximum number of iterations.
   alpha <- 0
   ls    <- 0
+  x0    <- 0
   for (iter in 1:maxiter) {
 
     # COMPUTE OBJECTIVE, CONSTRAINTS, etc.
@@ -131,8 +133,9 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     
     # Print the status of the algorithm.
     if (verbose)
-      cat(sprintf("%4d %+0.6e %+0.4f %0.1e %0.2e %0.2e %0.1e %03d\n",
-                  iter,f,log10(mu),sigma,norm2(rx),norm2(rc),alpha,ls))
+      cat(sprintf("%4d %+0.6e %0.1e %+0.4f %0.1e %0.2e %0.2e %0.1e %03d\n",
+                  iter,f,max(abs(x - x0)),log10(mu),sigma,norm2(rx),
+                  norm2(rc),alpha,ls))
 
     # CHECK CONVERGENCE
     # -----------------
@@ -140,6 +143,9 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     # we are done. 
     if (norm2(r0)/n < tol)
       break
+
+    # Save the current iterate.
+    x0 <- x
     
     # SOLUTION TO PERTURBED KKT SYSTEM
     # --------------------------------
