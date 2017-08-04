@@ -23,7 +23,21 @@ qnorm <- function (x, A)
 quadf <- function (x, A, b, c = 0)
   qnorm(x,A)^2/2 + sum(b*x) + c
 
-# Return
+# Compute the m x n Jacobian of the vector-valued constraint function,
+# and the the n x n Hessian of the Lagrangian (minus the Hessian of the
+# objective) for the quadratic program described in the comments above.
+qpjacobian <- function (x, z, constraints) {
+  n <- length(x)
+  m <- length(constraints)
+  J <- matrix(0,m,n)
+  W <- matrix(0,n,n)
+  for (i in 1:m) {
+    a     <- constraints[[i]]
+    J[i,] <- c(a$P %*% x + a$r)
+    W     <- W + z[i]*a$P
+  }
+  return(list(J = J,W = W))
+}
 
 # Quadratic objective function.
 H <- diag(c(2,2,4,2))
@@ -37,15 +51,11 @@ constraints <-
 
 # Solve the quadratic program using the primal-dual interior-point solver.
 out <- ipsolver(x      = c(0,0,0,0),
-                obj    = function (x) quadf(H,u,x)
-                grad   = function (x) list(g = H %*% x + u,H = H),
+                obj    = function (x) quadf(x,H,u),
+                grad   = function (x) list(g = c(H %*% x + u),H = H),
                 constr = function (x) sapply(constraints,
                                         function (a) with(a,quadf(x,P,r,-b))),
-                jac    = qpjacobian(x,z))
+                jac    = function (x, z) qpjacobian(x,z,constraints))
 cat("Solution:\n")
 print(out$x)
 
-    for i = 1:m
-      J(i,:) = (P{i}*x + r{i})';
-      W      = W + z(i)*P{i};
-    end

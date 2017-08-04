@@ -1,16 +1,16 @@
 # Return the quadratic norm (L2-norm) of vector x.
 norm2 <- function (x)
-  sqrt(dot(x,x))
-
+  sqrt(sum(x^2))
  
-# Compute the response of the merit function at (x,z).
-## function psi = merit (x, z, f, c, mu, eps)
-##   psi = f - c'*z - mu*sum(log(c.^2.*z+eps));
+# Compute the response of the primal-dual interior-point method merit
+# function at (x,z).
+ipsolver.merit <- function (x, z, f, b, mu, eps)
+  f - sum(b*z) - mu*sum(log(b^2*z + eps))
   
-## # ------------------------------------------------------------------
-## # Compute the directional derivative of the merit function at (x,z).
-## function dpsi = gradmerit (x, z, px, pz, g, c, J, mu, eps)
-##   dpsi = px'*(g - J'*z - 2*mu*J'*(1./(c-eps))) - pz'*(c + mu./(z+eps));
+# Compute the directional derivative of the merit function at (x,z).
+ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
+  sum(px * (g - c(t(J) %*% z - 2*mu*t(J) %*% (1./(b - eps))))) -
+    sum(pz * (b + mu/(z + eps)))
 
 # This function is a simple yet reasonably robust implementation of a
 # primal-dual interior-point solver for convex programs with convex
@@ -84,8 +84,8 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
   # --------------
   # Get the number of primal variables (nv), the number of constraints
   # (nc), and the total number of primal-dual optimization variables (n).
-  nv <- length(constr(x))
-  nc <- length(b)
+  nv <- length(x)
+  nc <- length(constr(x))
   n  <- nv + nc
 
   # Initialize the Lagrange multipliers.
@@ -115,8 +115,6 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     J   <- out$J
     W   <- out$W
 
-    browser()
-    
     # Compute the unperturbed Karush-Kuhn-Tucker optimality
     # conditions: rx is the dual residual and rc is the
     # complementarity.
@@ -128,73 +126,72 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     # interior-point method.
     eta        <- min(etamax,norm2(r0)/n)
     sigma      <- min(sigmamax,sqrt(norm2(r0)/n))
-    dualitygap <- -sum(b*z)
+    dualitygap <- sum(-b*z)
     mu         <- max(mumin,sigma*dualitygap/nc)
     
     # Print the status of the algorithm.
     if (verbose)
       cat(sprintf("%3d %+0.6e %+5.2f %0.1e %0.1e %0.1e %0.1e %3d\n",
-                  iter,f,log10(mu),sigma,norm(rx),norm(rc),alpha,ls))
+                  iter,f,log10(mu),sigma,norm2(rx),norm2(rc),alpha,ls))
 
     # CHECK CONVERGENCE
     # -----------------
     # If the norm of the responses is less than the specified tolerance,
     # we are done. 
-    if (norm(r0)/n < tol)
+    if (norm2(r0)/n < tol)
       break
     
     # SOLUTION TO PERTURBED KKT SYSTEM
     # --------------------------------
     # Compute the search direction of x and z.
     S  <- diag(z/(b - eps))
-    gb <- g - c(mu %*% t(J) %*% (1/(b - eps)))
-    px <- solve(B + W - t(J) %*% S %*% J,-gb)
+    gb <- g - mu*c(t(J) %*% (1/(b - eps)))
+    px <- solve(H + W - t(J) %*% S %*% J,-gb)
     pz <- -(z + mu/(b - eps) + c(S %*% J %*% px))
-    
+
     # BACKTRACKING LINE SEARCH
     # ------------------------
     # To ensure global convergence, execute backtracking line search to
     # determine the step length. First, we have to find the largest step
     # size which ensures that z remains feasible. Next, we perform
     # backtracking line search.
-    ## alpha = alphamax;
-    ## is    = find(z + pz < 0);
-    ## if (length(is) > 0)
-    ##   alpha = alphamax * min(1,min(z(is) ./ -pz(is)));
-    
-    ## # Compute the response of the merit function and the directional
-    ## # gradient at the current point and search direction.
-    ## psi  = merit(x,z,f,c,mu,eps);
-    ## dpsi = gradmerit(x,z,px,pz,g,c,J,mu,eps);
-    ## ls   = 0;
-    ## while true
+    alpha <- alphamax
+    i     <- which(z + pz < 0)
+    if (length(i) > 0)
+      alpha <- alphamax * min(1,min(z[i]/(-pz[i])))
 
-    ##   % Compute the candidate point, the constraints, and the response of
-    ##   % the objective function and merit function at the candidate point.
-    ##   ls     = ls + 1;
-    ##   xnew   = x + alpha * px;
-    ##   znew   = z + alpha * pz;
-    ##   f      = objective(xnew);
-    ##   c      = constraints(xnew);
-    ##   psinew = merit(xnew,znew,f,c,mu,eps);
+    # Compute the response of the merit function and the directional
+    # gradient at the current point and search direction.
+    psi  <- ipsolver.merit(x,z,f,b,mu,eps)
+    dpsi <- ipsolver.gradmerit(x,z,px,pz,g,b,J,mu,eps)
+    ls   <- 0
+    while (TRUE) {
+
+      # Compute the candidate iterate, the constraints, and the
+      # response of the objective function and merit function at the
+      # candidate point.
+      ls     <- ls + 1
+      xnew   <- x + alpha * px
+      znew   <- z + alpha * pz
+      f      <- obj(xnew)
+      b      <- constr(xnew)
+      psinew <- ipsolver.merit(xnew,znew,f,b,mu,eps)
       
-    ##   % Stop backtracking search if we've found a candidate point that
-    ##   % sufficiently decreases the merit function and satisfies all the
-    ##   % constraints.
-    ##   if sum(c > 0) == 0 & psinew < psi + tau*eta*alpha*dpsi
-    ##     x     = xnew;
-    ##     z     = znew;
-    ##     gprev = g;
-    ##     break
-    ##   end
+      # Stop backtracking search if we've found a candidate point that
+      # sufficiently decreases the merit function and satisfies all the
+      # constraints.
+      if (sum(b > 0) == 0 & psinew < psi + tau*eta*alpha*dpsi) {
+        x <- xnew
+        z <- znew
+        break
+      }
       
-    ##   % The candidate point does not meet our criteria, so decrease the step
-    ##   % size for 0 < beta < 1.
-    ##   alpha = alpha * beta;
-    ##   if alpha < alphamin
-    ##     error('Step size too small');
-    ##   end
-    ## end
+      # The candidate point does not meet our criteria, so decrease
+      # the step size for 0 < beta < 1.
+      alpha <- alpha * beta;
+      if (alpha < alphamin)
+        stop("Step size too small")
+    }
   }
 
   return(list(x = x))
