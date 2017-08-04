@@ -64,9 +64,9 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
 # If you set "verbose" to true, then at each iteration the solver will
 # output the following information: (1) the iteration number; (2)
 # objective; (3) barrier parameter, mu; (4) centering parameter,
-# sigma; (4) residuals of the perturbed Karush-Kuhn-Tucker system (rx,
-# rc); (5) the step size, and the number of iterations in the line
-# search before a suitable descent step was found.
+# sigma; (4) residuals of the perturbed Karush-Kuhn-Tucker system, rx
+# & rc; (5) the step size, and (6) the number of iterations in the
+# line search before a suitable descent step was found.
 ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
                       maxiter = 1e4, verbose = TRUE) {
 
@@ -92,7 +92,7 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
   z <- rep(1,nc)
   
   if (verbose)
-    cat("iter     objective log(mu)   sigma ||rx||  ||rc||  alpha   #ls\n")
+    cat("iter   objective   log(mu)  sigma   ||rx||   ||rc||   alpha  #ls\n")
   
   # Repeat while the convergence criterion has not been satisfied, and
   # we haven't reached the maximum number of iterations.
@@ -131,7 +131,7 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     
     # Print the status of the algorithm.
     if (verbose)
-      cat(sprintf("%4d %+0.6e %+0.4f %0.1e %0.1e %0.1e %0.1e %3d\n",
+      cat(sprintf("%4d %+0.6e %+0.4f %0.1e %0.2e %0.2e %0.1e %03d\n",
                   iter,f,log10(mu),sigma,norm2(rx),norm2(rc),alpha,ls))
 
     # CHECK CONVERGENCE
