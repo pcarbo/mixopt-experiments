@@ -57,5 +57,6 @@ out <- ipsolver(x      = c(0,0,0,0),
                                         function (a) with(a,quadf(x,P,r,-b))),
                 jac    = function (x, z) qpjacobian(x,z,constraints))
 cat("Solution:\n")
+options(digits = 4)
 print(out$x)
 
