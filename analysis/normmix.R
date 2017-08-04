@@ -56,26 +56,29 @@ cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
 
 # PLOT OPTIMIZATION RESULTS
 # -------------------------
+
 # Show the maximum change in the mixture weights at each iteration of
-# the EM algorithm.
+# the EM algorithm. Here, average r is the amount of time elapsed per
+# iteration.
 m  <- length(fit.em$err)
 i  <- 2:(m-1)
-p1 <- ggplot(data.frame(iter = i,err = fit.em$err[i]),
-             aes(x = iter,y = err)) +
+r  <- out["elapsed"] / m
+p1 <- ggplot(data.frame(time = r*i,err = fit.em$err[i]),
+             aes(x = time,y = err)) +
     geom_line(col = "darkorange",size = 1) + 
     theme_cowplot(font_size = 10) +
     scale_y_log10() +
-    labs(x     = "iteration",
+    labs(x     = "elapsed time (seconds)",
          y     = "max. change in solution")
 
 # Show the value of the objective function at each iteration of the EM
 # algorithm.
-p2 <- ggplot(data.frame(iter = i,y = fit.em$obj[i] - min(fit.em$obj)),
-                        aes(x = iter,y = y)) +
+p2 <- ggplot(data.frame(time = r*i,y = fit.em$obj[i] - min(fit.em$obj)),
+                        aes(x = time,y = y)) +
     geom_line(col = "darkorange",size = 1) +
     scale_y_log10() +
     theme_cowplot(font_size = 10) +
-    labs(x     = "iteration",
+    labs(x     = "elapsed time (seconds)",
          y     = "distance from minimum")
 
 # Draw the two plots side-by-side.
