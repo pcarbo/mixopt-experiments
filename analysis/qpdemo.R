@@ -39,18 +39,18 @@ qpjacobian <- function (x, z, constraints) {
   return(list(J = J,W = W))
 }
 
-# Quadratic objective function.
+# Define the quadratic objective function.
 H <- diag(c(2,2,4,2))
 u <- c(-5,-5,-21,7)
 
-# Quadratic inequality constraints.
+# Define the quadratic inequality constraints.
 constraints <-
   list(c1 = list(P = diag(c(4,2,2,0)),r = c(2,-1,0,-1),b = 5),
        c2 = list(P = diag(c(2,2,2,2)),r = c(1,-1,1,-1),b = 8),
        c3 = list(P = diag(c(2,4,2,4)),r = c(-1,0,0,-1),b = 10))
 
 # Solve the quadratic program using the primal-dual interior-point solver.
-out <- ipsolver(x      = c(0,0,0,0),
+out <- ipsolver(x      = rep(0,4),
                 obj    = function (x) quadf(x,H,u),
                 grad   = function (x) list(g = c(H %*% x + u),H = H),
                 constr = function (x) sapply(constraints,
