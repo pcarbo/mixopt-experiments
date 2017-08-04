@@ -35,7 +35,7 @@ y <- as.numeric(runif(n) < c(sigmoid(X %*% beta)))
 # positive. Argument a is the L1 penalty strength.
 logisticl1.obj <- function (X, y, w, a) {
   u <- c(sigmoid(X %*% w))
-  return(a*sum(w) - sum(y*log(u) + (1 - y)*log(1 - u)))
+  return(a*sum(w) - sum(y*log(u) + (1-y)*log(1-u)))
 }
 
 # This function returns the gradient and Hessian of the L1-penalized
@@ -47,11 +47,11 @@ logisticl1.grad <- function (X, y, w, a) {
 }
 
 # Minimize the penalized L1-penalized log-likelihood objective 
-A   <- rbind(X,-X)
+A   <- cbind(X,-X)
 fit <- ipsolver(x      = rep(1,2*p),
                 obj    = function (w) logisticl1.obj(A,y,w,lambda),
                 grad   = function (w) logisticl1.grad(A,y,w,lambda),
                 constr = function (w) -w,
-                jac    = function (w) list(J = -diag(rep(1,p)),
-                                           W = matrix(0,p,p)))
+                jac    = function (w, z) list(J = -diag(rep(1,p)),
+                                              W = matrix(0,p,p)))
 w  <- fit$w[1:p] - fit$w[-(1:p)]

@@ -80,14 +80,11 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
   beta     <- 0.75   # Granularity of backtracking search.
   tau      <- 0.01   # Decrease we will accept in line search.
 
-  browser()
-  
   # INITIALIZATION
   # --------------
   # Get the number of primal variables (nv), the number of constraints
   # (nc), and the total number of primal-dual optimization variables (n).
-  b  <- constr(x)
-  nv <- length(x)
+  nv <- length(constr(x))
   nc <- length(b)
   n  <- nv + nc
 
@@ -95,7 +92,7 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
   z <- rep(1,nc)
   
   if (verbose)
-    cat("iter f(x)       lg(mu) sigma   ||rx||  ||rc||  alpha   #ls\n")
+    cat("iter objective   log(mu) sigma   ||rx||  ||rc||  alpha   #ls\n")
   
   # Repeat while the convergence criterion has not been satisfied, and
   # we haven't reached the maximum number of iterations.
@@ -117,6 +114,8 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     out <- jac(x,z)
     J   <- out$J
     W   <- out$W
+
+    browser()
     
     # Compute the unperturbed Karush-Kuhn-Tucker optimality
     # conditions: rx is the dual residual and rc is the
@@ -134,14 +133,14 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     
     # Print the status of the algorithm.
     if (verbose)
-      cat(sprintf("%3d %+0.3e  %+5.2f %0.1e %0.1e %0.1e %0.1e %3d\n",
+      cat(sprintf("%3d %+0.6e %+5.2f %0.1e %0.1e %0.1e %0.1e %3d\n",
                   iter,f,log10(mu),sigma,norm(rx),norm(rc),alpha,ls))
 
     # CHECK CONVERGENCE
     # -----------------
     # If the norm of the responses is less than the specified tolerance,
     # we are done. 
-    if (norm(r0)/nv < tol)
+    if (norm(r0)/n < tol)
       break
     
     # SOLUTION TO PERTURBED KKT SYSTEM
