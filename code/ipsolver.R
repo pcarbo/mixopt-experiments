@@ -92,8 +92,8 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
   z <- rep(1,nc)
   
   if (verbose)
-    cat(paste("iter   objective    error  log(mu)  sigma   ||rx||   ||rc||  ",
-              "alpha  #ls\n"))
+    cat(paste("iter     objective max delta log(mu)   sigma   ||rx||  ",
+              "||rc||   alpha #ls\n"))
   
   # Repeat while the convergence criterion has not been satisfied, and
   # we haven't reached the maximum number of iterations.
@@ -133,7 +133,7 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     
     # Print the status of the algorithm.
     if (verbose)
-      cat(sprintf("%4d %+0.6e %0.1e %+0.4f %0.1e %0.2e %0.2e %0.1e %03d\n",
+      cat(sprintf("%4d %+0.6e %0.3e %+0.4f %0.1e %0.2e %0.2e %0.1e %03d\n",
                   iter,f,max(abs(x - x0)),log10(mu),sigma,norm2(rx),
                   norm2(rc),alpha,ls))
 
