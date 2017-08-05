@@ -91,15 +91,24 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
   # Initialize the Lagrange multipliers.
   z <- rep(1,nc)
   
-  if (verbose)
-    cat(paste("iter     objective max delta log(mu)   sigma   ||rx||  ",
-              "||rc||   alpha #ls\n"))
+  # Initialize storage for the outputs.
+  out <- list(obj   = rep(0,maxiter),
+              maxd  = rep(0,maxiter),
+              mu    = rep(0,maxiter),
+              sigma = rep(0,maxiter),
+              rx    = rep(0,maxiter),
+              rc    = rep(0,maxiter),
+              alpha = rep(0,maxiter),
+              ls    = rep(0,maxiter))
   
   # Repeat while the convergence criterion has not been satisfied, and
   # we haven't reached the maximum number of iterations.
   alpha <- 0
   ls    <- 0
   x0    <- 0
+  if (verbose)
+    cat(paste("iter     objective max delta log(mu)   sigma   ||rx||  ",
+              "||rc||   alpha #ls\n"))
   for (iter in 1:maxiter) {
 
     # COMPUTE OBJECTIVE, CONSTRAINTS, etc.
@@ -108,14 +117,14 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     # Hessian of the objective, the inequality constraints, the
     # Jacobian of the inequality constraints, and the Hessian of the
     # Lagrangian (minus the Hessian of the objective).
-    f   <- obj(x)
-    b   <- constr(x)
-    out <- grad(x)
-    g   <- out$g
-    H   <- out$H
-    out <- jac(x,z)
-    J   <- out$J
-    W   <- out$W
+    f <- obj(x)
+    b <- constr(x)
+    a <- grad(x)
+    g <- a$g
+    H <- a$H
+    a <- jac(x,z)
+    J <- a$J
+    W <- a$W
 
     # Compute the unperturbed Karush-Kuhn-Tucker optimality
     # conditions: rx is the dual residual and rc is the
@@ -132,11 +141,21 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     mu         <- max(mumin,sigma*dualitygap/nc)
     
     # Print the status of the algorithm.
+    maxd <- max(abs(x - x0))
     if (verbose)
       cat(sprintf("%4d %+0.6e %0.3e %+0.4f %0.1e %0.2e %0.2e %0.1e %03d\n",
-                  iter,f,max(abs(x - x0)),log10(mu),sigma,norm2(rx),
-                  norm2(rc),alpha,ls))
+                  iter,f,maxd,log10(mu),sigma,norm2(rx),norm2(rc),alpha,ls))
 
+    # Save the status of the algorithm.
+    out$obj[iter]   <- f
+    out$maxd[iter]  <- maxd
+    out$mu[iter]    <- mu
+    out$sigma[iter] <- sigma
+    out$rx[iter]    <- norm2(rx)
+    out$rc[iter]    <- norm2(rc)
+    out$alpha[iter] <- alpha
+    out$ls[iter]    <- ls
+    
     # CHECK CONVERGENCE
     # -----------------
     # If the norm of the responses is less than the specified tolerance,
@@ -200,5 +219,8 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     }
   }
 
-  return(list(x = x))
+  # Return the solution and other optimization info.
+  out   <- lapply(out,function (x) x[1:iter]);
+  out$x <- x
+  return(out)
 }
