@@ -5,6 +5,10 @@
 # Shorthand for machine precision.
 eps <- .Machine$double.eps
 
+# Return the n x n identity matrix.
+eye <- function (n)
+  diag(rep(1,n))
+
 # Scale each column A[,i] by b[i].
 scale.cols <- function (A, b)
   t(t(A) * b)
@@ -111,12 +115,14 @@ mixopt.dualip <- function (L, w, maxiter = 1e4, tol, verbose = TRUE) {
 
                   # Jacobian matrix and Hessian of Lagrangian.
                   jac = function (x, z) {
-                    # TO DO
+                    n <- length(x)
+                    return(J = rbind(-eye(n),t(L)),
+                           W = matrix(0,n,n))
                   })
 
   # Return the fitted model parameters and other optimization info. 
   fit <- list(L = L,w = out$x,maxd = out$maxd,obj = out$obj,
-              out.ipsolver = out[c("mu","sigma","rx","rc","alpha","ls","x")])
+              ipsolver = out[c("mu","sigma","rx","rc","alpha","ls","x")])
   class(fit) <- c("mixopt","list")
   return(fit)
 }

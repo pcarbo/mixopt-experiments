@@ -63,6 +63,8 @@ fit.ip <-
 
 # PLOT OPTIMIZATION RESULTS
 # -------------------------
+# TO DO: First show results by iteration instead of elapsed seconds.
+
 # Show the maximum change in the mixture weights at each iteration of
 # the EM algorithm. Here, average r is the amount of time elapsed per
 # iteration.
