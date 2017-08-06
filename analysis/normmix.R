@@ -49,15 +49,20 @@ k <- length(s)
 cat(sprintf("Computing the %d x %d conditional likelihood matrix.\n",n,k))
 L <- condlikmatrix.norm(x,se,s)
 
-# FIT MIXTURE MODEL
-# -----------------
-cat("Fitting model to data.\n")
+# FIT MIXTURE MODEL USING EM ALGORITHM
+# ------------------------------------
+cat("Fitting model using EM.\n")
 out <- system.time(fit.em <- mixopt.em(L))
 cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
 
+# FIT MIXTURE MODEL USING IP METHOD
+# ---------------------------------
+cat("Fitting model using interior-point algorithm.\n")
+fit.ip <- 
+                                        
+
 # PLOT OPTIMIZATION RESULTS
 # -------------------------
-
 # Show the maximum change in the mixture weights at each iteration of
 # the EM algorithm. Here, average r is the amount of time elapsed per
 # iteration.

@@ -17,8 +17,7 @@ mixopt.objective <- function (L, w)
 
 # TO DO: Explain what this function does, and how to use it.
 # Refer to Extreme Deconvolution paper for EM algorithm.
-mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, drop.threshold = 1e-8,
-                       verbose = TRUE) {
+mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
 
   # Get the number of mixture components.
   k <- ncol(L)
@@ -88,6 +87,36 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, drop.threshold = 1e-8,
 
 # TO DO: Explain what this function does, and how to use it.
 # Refer to REBayes paper for formulation of dual problem.
-mixopt.dualip <- function () {
+mixopt.dualip <- function (L, w, maxiter = 1e4, tol, verbose = TRUE) {
 
+  # Get the number of samples.
+  n <- nrow(L)
+    
+  # Get a feasible initial guess for the dual variables.
+  # TO DO.
+
+  # Solve the dual formulation using the primal-dual interior-point
+  # algorithm.
+  out <- ipsolver(x = x0,tol = tol,maxiter = maxiter,verbose = verbose,
+               
+                  # Dual objective.
+                  obj = function (x) sum(-log(x + eps)),
+
+                  # Gradient and Hessian of objective.
+                  grad = function (x) list(g = -1/(x + eps),
+                                           H = diag(1/(x^2 + eps))),
+
+                  # Inequality constraints.
+                  constr = function (x) c(-x,x %*% L - n)
+
+                  # Jacobian matrix and Hessian of Lagrangian.
+                  jac = function (x, z) {
+                    # TO DO
+                  })
+
+  # Return the fitted model parameters and other optimization info. 
+  fit <- list(L = L,w = out$x,maxd = out$maxd,obj = out$obj,
+              out.ipsolver = out[c("mu","sigma","rx","rc","alpha","ls","x")])
+  class(fit) <- c("mixopt","list")
+  return(fit)
 }

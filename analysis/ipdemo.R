@@ -1,3 +1,5 @@
+# NOTE: This script is currently incomplete.
+#
 # Demonstration of the primal-dual interior-point solver for fitting a
 # logistic regression model. It computes estimates of the regression
 # coefficients subject to an L1 penalization ("Lasso").
