@@ -13,6 +13,7 @@
 #
 # This particular example originally comes from the book: H. P. Schwefel
 # (1995) Evolution and Optimum Seeking. The minimium occurs at (0,1,2,-1).
+#
 source("../code/ipsolver.R")
 
 # Return the quadratic (L2) norm of x with respect to matrix A.

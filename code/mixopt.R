@@ -91,14 +91,14 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
 
 # TO DO: Explain what this function does, and how to use it.
 # Refer to REBayes paper for formulation of dual problem.
-mixopt.dualip <- function (L, w, maxiter = 1e4, tol, verbose = TRUE) {
+mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
 
   # Get the number of samples.
   n <- nrow(L)
     
   # Get a feasible initial guess for the dual variables.
-  # TO DO.
-
+  x0 <- rep(1/(2*max(L)),n)
+  
   # Solve the dual formulation using the primal-dual interior-point
   # algorithm.
   out <- ipsolver(x = x0,tol = tol,maxiter = maxiter,verbose = verbose,
@@ -111,17 +111,20 @@ mixopt.dualip <- function (L, w, maxiter = 1e4, tol, verbose = TRUE) {
                                            H = diag(1/(x^2 + eps))),
 
                   # Inequality constraints.
-                  constr = function (x) c(-x,x %*% L - n)
+                  constr = function (x) c(x %*% L - n,-x),
 
                   # Jacobian matrix and Hessian of Lagrangian.
                   jac = function (x, z) {
                     n <- length(x)
-                    return(J = rbind(-eye(n),t(L)),
-                           W = matrix(0,n,n))
+                    return(list(J = rbind(t(L),-eye(n)),
+                                W = matrix(0,n,n)))
                   })
-
+  
+  # Recover the dual solution (which gives the mixture weights).
+  w <- out$z[1:k]
+  
   # Return the fitted model parameters and other optimization info. 
-  fit <- list(L = L,w = out$x,maxd = out$maxd,obj = out$obj,
+  fit <- list(L = L,w = w,x = out$x,maxd = out$maxd,obj = out$obj,
               ipsolver = out[c("mu","sigma","rx","rc","alpha","ls","x")])
   class(fit) <- c("mixopt","list")
   return(fit)

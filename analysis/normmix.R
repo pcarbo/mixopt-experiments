@@ -7,7 +7,7 @@
 seed <- 1
 
 # Number of data samples.
-n <- 1e4
+n <- 200
 
 # The standard deviations and mixture weights used to simulate the data. 
 sim <- list(s = c(0,   0.1, 0.2, 0.5),
@@ -16,11 +16,8 @@ sim <- list(s = c(0,   0.1, 0.2, 0.5),
 # MODEL PARAMETERS
 # ----------------
 # The standard deviations of the normal mixture components. 
-s <- c(0.01,10^(seq(-2,0,length.out = 39)))
-
-# OPTIMIZATION SETTINGS
-# ---------------------
-# TO DO.
+# s <- c(0.01,10^(seq(-2,0,length.out = 39)))
+s <- sim$s
 
 # LOAD PACKAGES AND FUNCTIONS
 # ---------------------------
@@ -52,14 +49,18 @@ L <- condlikmatrix.norm(x,se,s)
 # FIT MIXTURE MODEL USING EM ALGORITHM
 # ------------------------------------
 cat("Fitting model using EM.\n")
-out <- system.time(fit.em <- mixopt.em(L))
+out <- system.time(fit.em <- mixopt.em(L,tol = 1e-6))
 cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
+
+library(REBayes)
+out <- KWDual(L,rep(1,k),rep(1,n))
 
 # FIT MIXTURE MODEL USING IP METHOD
 # ---------------------------------
 cat("Fitting model using interior-point algorithm.\n")
-fit.ip <- 
-                                        
+fit.ip <- mixopt.dualip(L)
+
+stop()
 
 # PLOT OPTIMIZATION RESULTS
 # -------------------------

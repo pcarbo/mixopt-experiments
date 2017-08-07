@@ -50,7 +50,7 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
 #
 #   constr returns the value of the constraint function c(x) at x.
 #
-#   jac takes two inputs: the primal varaibles x and the dual
+#   jac takes two inputs: the primal variables x and the dual
 #   variables z. The return value is a list with two elements: the m x
 #   n Jacobian matrix (containing the first-order partial derivatives
 #   of the inequality constraint functions), and W is the n x n
@@ -213,14 +213,13 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
       
       # The candidate point does not meet our criteria, so decrease
       # the step size for 0 < beta < 1.
-      alpha <- alpha * beta;
+      alpha <- alpha * beta
       if (alpha < alphamin)
         stop("Step size too small")
     }
   }
 
-  # Return the solution and other optimization info.
-  out   <- lapply(out,function (x) x[1:iter]);
-  out$x <- x
-  return(out)
+  # Return the (primal and dual) solution, and other optimization
+  # info.
+  return(c(list(x = x,z = z),lapply(out,function (x) x[1:iter])))
 }
