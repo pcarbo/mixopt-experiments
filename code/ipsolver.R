@@ -13,8 +13,7 @@ ipsolver.merit <- function (x, z, f, b, mu, eps)
   
 # Compute the directional derivative of the merit function at (x,z).
 ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
-  # sum(px * (g - drop(t(J) %*% z - 2*mu*t(J) %*% (1./(b - eps))))) -
-  sum(px * (g - c(t(J) %*% z - 2*mu*t(J) %*% (1./(b - eps))))) -
+  sum(px * (g - drop(t(J) %*% z - 2*mu*t(J) %*% (1./(b - eps))))) -
     sum(pz * (b + mu/(z + eps)))
 
 # This function is a simple yet reasonably robust implementation of a
@@ -134,8 +133,7 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     # Compute the unperturbed Karush-Kuhn-Tucker optimality
     # conditions: rx is the dual residual and rc is the
     # complementarity.
-    # rx <- g + drop(z %*% J)
-    rx <- c(g + t(J) %*% z)
+    rx <- g + drop(z %*% J)
     rc <- b*z
     r0 <- c(rx,rc)
 
@@ -175,14 +173,10 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     # SOLUTION TO PERTURBED KKT SYSTEM
     # --------------------------------
     # Compute the search direction of x and z.
-    # S  <- spdiag(z/(b - eps))
-    # gb <- g - mu*drop(1/(b - eps) %*% J)
-    # px <- drop(solve(H + W - t(J) %*% S %*% J,-gb))
-    # pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
-    S  <- diag(z/(b - eps))
-    gb <- g - mu*c(t(J) %*% (1/(b - eps)))
-    px <- solve(H + W - t(J) %*% S %*% J,-gb)
-    pz <- -(z + mu/(b - eps) + c(S %*% J %*% px))
+    S  <- spdiag(z/(b - eps))
+    gb <- g - mu*drop((1/(b - eps)) %*% J)
+    px <- drop(solve(H + W - t(J) %*% S %*% J,-gb))
+    pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
 
     # BACKTRACKING LINE SEARCH
     # ------------------------

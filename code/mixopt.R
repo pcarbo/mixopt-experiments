@@ -115,21 +115,16 @@ mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
                   obj = function (x) sum(-log(x + eps)),
 
                   # Gradient & Hessian of objective.
-                  # grad = function (x) list(g = -1/(x + eps),
-                  #                          H = spdiag(1/(x^2 + eps))),
                   grad = function (x) list(g = -1/(x + eps),
-                                           H = diag(1/(x^2 + eps))),
+                                           H = spdiag(1/(x^2 + eps))),
                   
                   # Inequality constraints.
                   constr = function (x) c(drop(x %*% L - n),-x),
 
                   # Jacobian matrix & Hessian of Lagrangian.
-                  # jac = function (x, z)
-                  #   list(J = rbind(t(L),-speye(n)),
-                  #        W = spzeros(n,n)))
                   jac = function (x, z)
-                    list(J = rbind(t(L),-eye(n)),
-                         W = matrix(0,n,n)))
+                    list(J = rbind(t(L),-speye(n)),
+                         W = spzeros(n,n)))
   
   # Recover the dual solution (which gives the mixture weights).
   w <- out$z[1:k]
