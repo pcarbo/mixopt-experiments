@@ -18,7 +18,7 @@ source("../code/ipsolver.R")
 
 # Return the quadratic (L2) norm of x with respect to matrix A.
 qnorm <- function (x, A)
-  c(sqrt(sum(x * (A %*% x))))
+  drop(sqrt(sum(x * (A %*% x))))
 
 # Return x'*A*x/2 + b'*x + c.
 quadf <- function (x, A, b, c = 0)
@@ -34,7 +34,7 @@ qpjacobian <- function (x, z, constraints) {
   W <- matrix(0,n,n)
   for (i in 1:m) {
     a     <- constraints[[i]]
-    J[i,] <- c(a$P %*% x + a$r)
+    J[i,] <- drop(a$P %*% x + a$r)
     W     <- W + z[i]*a$P
   }
   return(list(J = J,W = W))
@@ -53,7 +53,7 @@ constraints <-
 # Solve the quadratic program using the primal-dual interior-point solver.
 out <- ipsolver(x      = rep(0,4),
                 obj    = function (x) quadf(x,H,u),
-                grad   = function (x) list(g = c(H %*% x + u),H = H),
+                grad   = function (x) list(g = drop(H %*% x + u),H = H),
                 constr = function (x) sapply(constraints,
                                         function (a) with(a,quadf(x,P,r,-b))),
                 jac    = function (x, z) qpjacobian(x,z,constraints))

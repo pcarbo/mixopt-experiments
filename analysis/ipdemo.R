@@ -26,7 +26,7 @@ sigmoid <- function (x)
 cat("Generating data set.\n")
 p <- length(beta)
 X <- matrix(rnorm(n*p),n,p)
-y <- as.numeric(runif(n) < c(sigmoid(X %*% beta)))
+y <- as.numeric(runif(n) < drop(sigmoid(X %*% beta)))
 
 # FIT MODEL
 # ---------
@@ -36,15 +36,15 @@ y <- as.numeric(runif(n) < c(sigmoid(X %*% beta)))
 # positive and negative components so that all entries of w are
 # positive. Argument a is the L1 penalty strength.
 logisticl1.obj <- function (X, y, w, a) {
-  u <- c(sigmoid(X %*% w))
+  u <- drop(sigmoid(X %*% w))
   return(a*sum(w) - sum(y*log(u) + (1-y)*log(1-u)))
 }
 
 # This function returns the gradient and Hessian of the L1-penalized
 # log-likelihood objective.
 logisticl1.grad <- function (X, y, w, a) {
-  u <- c(sigmoid(X %*% w))
-  return(list(g = c(t(X) %*% (y - u)) + a,
+  u <- drop(sigmoid(X %*% w))
+  return(list(g = drop(t(X) %*% (y - u)) + a,
               H = t(X) %*% diag(u*(1 - u)) %*% X))
 }
 

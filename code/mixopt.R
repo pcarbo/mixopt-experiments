@@ -9,6 +9,14 @@ eps <- .Machine$double.eps
 eye <- function (n)
   diag(rep(1,n))
 
+# Return a sparse n x n identity matrix.
+speye <- function (n)
+  .symDiagonal(n)
+
+# Return a m x n sparse matrix of all zeros.
+spzeros <- function (m, n)
+  sparseMatrix(dims = c(m,n),i = NULL,j = NULL)
+
 # Scale each column A[,i] by b[i].
 scale.cols <- function (A, b)
   t(t(A) * b)
@@ -17,7 +25,7 @@ scale.cols <- function (A, b)
 # conditional likelihood matrix L and mixture weights w, where n is
 # the number of samples and k is the number of mixture components.
 mixopt.objective <- function (L, w)
-  -sum(log(c(L %*% w) + eps))
+  -sum(log(drop(L %*% w) + eps))
 
 # TO DO: Explain what this function does, and how to use it.
 # Refer to Extreme Deconvolution paper for EM algorithm.
@@ -98,7 +106,7 @@ mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
     
   # Get a feasible initial guess for the dual variables.
   x0 <- rep(1/(2*max(L)),n)
-  
+
   # Solve the dual formulation using the primal-dual interior-point
   # algorithm.
   out <- ipsolver(x = x0,tol = tol,maxiter = maxiter,verbose = verbose,
@@ -106,19 +114,22 @@ mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
                   # Dual objective.
                   obj = function (x) sum(-log(x + eps)),
 
-                  # Gradient and Hessian of objective.
+                  # Gradient & Hessian of objective.
+                  # grad = function (x) list(g = -1/(x + eps),
+                  #                          H = spdiag(1/(x^2 + eps))),
                   grad = function (x) list(g = -1/(x + eps),
                                            H = diag(1/(x^2 + eps))),
-
+                  
                   # Inequality constraints.
-                  constr = function (x) c(x %*% L - n,-x),
+                  constr = function (x) c(drop(x %*% L - n),-x),
 
-                  # Jacobian matrix and Hessian of Lagrangian.
-                  jac = function (x, z) {
-                    n <- length(x)
-                    return(list(J = rbind(t(L),-eye(n)),
-                                W = matrix(0,n,n)))
-                  })
+                  # Jacobian matrix & Hessian of Lagrangian.
+                  # jac = function (x, z)
+                  #   list(J = rbind(t(L),-speye(n)),
+                  #        W = spzeros(n,n)))
+                  jac = function (x, z)
+                    list(J = rbind(t(L),-eye(n)),
+                         W = matrix(0,n,n)))
   
   # Recover the dual solution (which gives the mixture weights).
   w <- out$z[1:k]

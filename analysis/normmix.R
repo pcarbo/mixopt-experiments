@@ -23,6 +23,7 @@ s <- sim$s
 # ---------------------------
 # Load the data simulation functions, likelihood computation functions
 # and optimization algorithms into the R environment.
+# library(Matrix)
 library(ggplot2)
 library(cowplot)
 source("../code/datasim.R")

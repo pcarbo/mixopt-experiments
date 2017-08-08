@@ -2,3 +2,6 @@
 * Convert demo.norm.R script to R Markdown.
 * Create index.Rmd.
 * Generate webpages from .Rmd files.
+* Make mixopt.dualip more efficient using sparse matrices.
+* Add timing information to each iteration of mixopt.em.
+* Add timing information to each iteration of mixopt.dualip.
