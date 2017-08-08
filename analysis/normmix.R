@@ -16,8 +16,7 @@ sim <- list(s = c(0,   0.1, 0.2, 0.5),
 # MODEL PARAMETERS
 # ----------------
 # The standard deviations of the normal mixture components. 
-# s <- c(0.01,10^(seq(-2,0,length.out = 39)))
-s <- sim$s
+s <- c(0.01,10^(seq(-2,0,length.out = 19)))
 
 # LOAD PACKAGES AND FUNCTIONS
 # ---------------------------
@@ -50,16 +49,18 @@ L <- condlikmatrix.norm(x,se,s)
 # FIT MIXTURE MODEL USING EM ALGORITHM
 # ------------------------------------
 cat("Fitting model using EM.\n")
-out <- system.time(fit.em <- mixopt.em(L,tol = 1e-6))
+out <- system.time(fit.em <- mixopt.em(L))
 cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
-
-library(REBayes)
-out <- KWDual(L,rep(1,k),rep(1,n))
 
 # FIT MIXTURE MODEL USING IP METHOD
 # ---------------------------------
+# Compare against
+#
+#   fit.ip <- REBayes:KWDual(L,rep(1,k),rep(1,n))
+#
 cat("Fitting model using interior-point algorithm.\n")
-fit.ip <- mixopt.dualip(L)
+out <- system.time(fit.ip <- mixopt.dualip(L))
+cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
 
 stop()
 
