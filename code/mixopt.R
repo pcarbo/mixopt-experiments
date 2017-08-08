@@ -42,6 +42,11 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
   obj  <- rep(0,maxiter)
   maxd <- rep(0,maxiter)
 
+  # Initialize storage for output "timing".
+  timing           <- matrix(0,maxiter,3)
+  timing[1,]       <- summary(proc.time())
+  colnames(timing) <- names(summary(proc.time()))
+
   # Compute the objective function value at the initial iterate.
   f <- mixopt.objective(L,w)
   
@@ -73,8 +78,9 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
     # criterion. Convergence is reached when the maximum difference
     # between the mixture weights at two successive iterations is less
     # than the specified tolerance, or when objective increases.
-    maxd[iter] <- max(abs(w - w0))
-    obj[iter]  <- f
+    maxd[iter]    <- max(abs(w - w0))
+    obj[iter]     <- f
+    timing[iter,] <- summary(proc.time())
     if (verbose) {
       progress.str <- sprintf("%4d %+0.6e %0.3e",iter,f,maxd[iter])
       cat(progress.str)
@@ -92,7 +98,8 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
     cat("\n")
   
   # Return the fitted model parameters and other optimization info. 
-  fit <- list(L = L,w = w,maxd = maxd[1:iter],obj = obj[1:iter])
+  fit <- list(L = L,w = w,maxd = maxd[1:iter],obj = obj[1:iter],
+              timing = timing[1:iter,])
   class(fit) <- c("mixopt","list")
   return(fit)
 }
