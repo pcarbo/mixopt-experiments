@@ -2,7 +2,11 @@
 title: "EM vs. IP solution to mixture optimization problem"
 author: "Peter Carbonetto"
 date: August 9, 2017
-output: html_document
+output:
+  html_document:
+    theme: readable
+    include:
+      before_body: include/header.html
 ---
 
 TO DO: Give overview of this analysis, and instructions for
@@ -89,18 +93,33 @@ cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
             length(fit.em$maxd),out["elapsed"]))
 ```
 
-```{r include=FALSE}
+## Fit mixture model using IP method
 
-# FIT MIXTURE MODEL USING IP METHOD
-# ---------------------------------
-# Compare against
-#
-#   fit.ip <- REBayes:KWDual(L,rep(1,k),rep(1,n))
-#
-cat("Fitting model using interior-point algorithm.\n")
+The primal-dual interior-point solver is based on the algorithm
+described by [Armand *et al*](https://doi.org/10.1137/S1052623498344720).
+It is substantially more complicated than the EM algorithm, and
+individual iterations are more expensive, but it takes only a small
+number of iterations to converge to a solution.
+
+```{r, ip}
 out <- system.time(fit.ip <- mixopt.dualip(L))
-cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
+cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
+            length(fit.ip$maxd),out["elapsed"]))
+```
 
+Note that the EM algorithm implements a very simple convergence
+criterion---the maximum difference between the iterates must be
+small---whereas the convergence in the interior-point method is based
+on how close we are to satisfying the KKT optimality conditions.
+
+If you have the RMosek and REBayes packages installed, you can
+compare the output of the IP method to running
+
+```{r rebayes, echo=TRUE, eval=FALSE}
+REBayes:KWDual(L,rep(1,k),rep(1,n))
+```
+
+```{r, include=FALSE}
 # PLOT OPTIMIZATION RESULTS
 # -------------------------
 adjust.plot <- function (p)
