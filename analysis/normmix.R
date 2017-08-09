@@ -22,7 +22,7 @@ s <- c(0.01,10^(seq(-2,0,length.out = 19)))
 # ---------------------------
 # Load the data simulation functions, likelihood computation functions
 # and optimization algorithms into the R environment.
-# library(Matrix)
+library(Matrix)
 library(ggplot2)
 library(cowplot)
 source("../code/datasim.R")

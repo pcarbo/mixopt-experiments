@@ -17,6 +17,10 @@ speye <- function (n)
 spzeros <- function (m, n)
   sparseMatrix(dims = c(m,n),i = NULL,j = NULL)
 
+# Subtract b[i] from each column A[,i].
+subtract.cols <- function (A, b)
+  t(t(A) - b)
+
 # Scale each column A[,i] by b[i].
 scale.cols <- function (A, b)
   t(t(A) * b)
@@ -96,10 +100,14 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
   }
   if (verbose)
     cat("\n")
+
+  # Reset the timings to zero.
+  timing <- timing[1:iter,]
+  timing <- subtract.cols(timing,timing[1,])
   
-  # Return the fitted model parameters and other optimization info. 
+  # Return the fitted model parameters and other optimization info.
   fit <- list(L = L,w = w,maxd = maxd[1:iter],obj = obj[1:iter],
-              timing = timing[1:iter,])
+              timing = timing)
   class(fit) <- c("mixopt","list")
   return(fit)
 }
