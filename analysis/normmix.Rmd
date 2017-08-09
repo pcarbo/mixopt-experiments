@@ -1,5 +1,5 @@
 ---
-title: "EM vs. IP solution to mixture optimization problem"
+title: "Illustration of EM and IP solutions to mixture optimization problem"
 author: "Peter Carbonetto"
 date: August 9, 2017
 output:
@@ -83,7 +83,21 @@ L <- condlikmatrix.norm(x,se,s)
 
 ## Fit mixture model using EM
 
-First, fit the mixture model using the very simple EM algorithm.
+First, fit the mixture model using the EM algorithm. This is a very
+simple algorithm---after computing the conditional likelihood matrix,
+the E and M steps can be implemented in only a few lines of code:
+
+```{r, eval=FALSE}
+# E Step
+P <- t(t(L) * w)
+P <- P / (rowSums(P) + eps)
+
+# M step
+w <- colMeans(P)
+```
+
+Here, eps is a small number near zero (e.g., 1e-8).
+
 Observe that individual EM iterations are fast but it takes many
 iterations to converge to a solution.
 
@@ -107,12 +121,12 @@ cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
             length(fit.ip$maxd),out["elapsed"]))
 ```
 
-Note that the EM algorithm implements a very simple convergence
-criterion---the maximum difference between the iterates must be
-small---whereas the convergence in the IP method is based on how close
-we are to satisfying the KKT optimality conditions.
+The EM algorithm implements a very simple convergence criterion---the
+maximum difference between the iterates must be small---whereas the
+convergence in the IP method is based on how close we are to
+satisfying the KKT optimality conditions.
 
-If you have the RMosek and REBayes packages installed, you can
+*Note:* if you have the RMosek and REBayes packages installed, you can
 compare the output of the IP method to running
 
 ```{r rebayes, echo=TRUE, eval=FALSE}
@@ -154,8 +168,10 @@ p2 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
        title = "IP algorithm")
 ```
 
-This next plot shows the value of the (primal) objective function
-against running time of the EM algorithm.
+This next plot shows the distance of the (primal) objective function
+to the minimum against running time of the EM algorithm. (Here, we
+take the ground-truth minimizer to be the IP solution because it is
+much better than the EM solution.)
 
 ```{r}
 m  <- length(fit.em$obj)
@@ -190,13 +206,24 @@ p4 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
 
 Arrange all four plots in a single figure.
 
-```{r plot-grid, figure.width=8, figure.height=5}
+```{r plot-grid, fig.width=8, fig.height=6}
 adjust.plot <- function (p)
-  p + theme_cowplot(font_size = 9) +
+  p + theme_cowplot(font_size = 12) +
     theme(plot.title = element_text(face = "plain"))
 print(plot_grid(adjust.plot(p1),adjust.plot(p3),
                 adjust.plot(p2),adjust.plot(p4)))
 ```
+
+These plots show the different behaviour of the EM and IP methods:
+
++ The IP method moves quickly toward the solution to the convex
+  optimization problem, but each iteration is more expensive.
+
++ Most importantly, the EM algorithm never quite reaches the
+  stationary point; this deceptively simple optimization problem
+  highlights the extremely poor convergence properties of the EM
+  iterates. By contrast, the IP method has much stronger convergence
+  to the solution.
 
 ## Session information
 
