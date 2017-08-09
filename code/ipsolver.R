@@ -65,13 +65,19 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
 #
 #   where Wi is the Hessian of the ith constraint.
 #
+# There is an optional callback function, "callback", that accepts as
+# input the current primal variables (x) and dual variables (z). It is
+# called once per iteration and will save all output from this
+# function into a list.
+#
 # If you set "verbose" to true, then at each iteration the solver will
 # output the following information: (1) the iteration number; (2)
 # objective; (3) barrier parameter, mu; (4) centering parameter,
 # sigma; (4) residuals of the perturbed Karush-Kuhn-Tucker system, rx
-# & rc; (5) the step size, and (6) the number of iterations in the
-# line search before a suitable descent step was found.
-ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
+# & rc; (5) the step size, (6) the number of iterations in the line
+# search before a suitable descent step was found, and (7) any output
+# provided by the optional callback function.
+ipsolver <- function (x, obj, grad, constr, jac, callback, tol = 1e-8,
                       maxiter = 1e4, verbose = TRUE) {
 
   # Some algorithm parameters.
@@ -96,14 +102,20 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
   z <- rep(1,nc)
   
   # Initialize storage for the outputs.
-  out <- list(obj   = rep(0,maxiter),
-              maxd  = rep(0,maxiter),
-              mu    = rep(0,maxiter),
-              sigma = rep(0,maxiter),
-              rx    = rep(0,maxiter),
-              rc    = rep(0,maxiter),
-              alpha = rep(0,maxiter),
-              ls    = rep(0,maxiter))
+  out <- list(obj      = rep(0,maxiter),
+              maxd     = rep(0,maxiter),
+              mu       = rep(0,maxiter),
+              sigma    = rep(0,maxiter),
+              rx       = rep(0,maxiter),
+              rc       = rep(0,maxiter),
+              alpha    = rep(0,maxiter),
+              ls       = rep(0,maxiter),
+              callback = vector("list",maxiter))
+
+  # Initialize storage for the timings output.
+  timing           <- matrix(0,maxiter,3)
+  timing[1,]       <- summary(proc.time())
+  colnames(timing) <- names(summary(proc.time()))
   
   # Repeat while the convergence criterion has not been satisfied, and
   # we haven't reached the maximum number of iterations.
@@ -150,6 +162,11 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
       cat(sprintf("%4d %+0.6e %0.3e %+0.4f %0.1e %0.2e %0.2e %0.1e %03d\n",
                   iter,f,maxd,log10(mu),sigma,norm2(rx),norm2(rc),alpha,ls))
 
+    # Execute the callback function, if provided.
+    if (!missing(callback))
+      if (!is.null(callback))
+        out$callback[[iter]] <- callback(x,z)
+    
     # Save the status of the algorithm.
     out$obj[iter]   <- f
     out$maxd[iter]  <- maxd
@@ -159,6 +176,7 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     out$rc[iter]    <- norm2(rc)
     out$alpha[iter] <- alpha
     out$ls[iter]    <- ls
+    timing[iter,]   <- summary(proc.time())
     
     # CHECK CONVERGENCE
     # -----------------
@@ -223,7 +241,12 @@ ipsolver <- function (x, obj, grad, constr, jac, tol = 1e-8,
     }
   }
 
+  # Reset the timings to zero.
+  timing <- timing[1:iter,]
+  timing <- subtract.cols(timing,timing[1,])
+  
   # Return the (primal and dual) solution, and other optimization
   # info.
-  return(c(list(x = x,z = z),lapply(out,function (x) x[1:iter])))
+  return(c(list(x = x,z = z,timing = timing),
+           lapply(out,function (x) x[1:iter])))
 }

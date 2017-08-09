@@ -46,7 +46,7 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
   obj  <- rep(0,maxiter)
   maxd <- rep(0,maxiter)
 
-  # Initialize storage for output "timing".
+  # Initialize storage for the timings output.
   timing           <- matrix(0,maxiter,3)
   timing[1,]       <- summary(proc.time())
   colnames(timing) <- names(summary(proc.time()))
@@ -145,8 +145,9 @@ mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
   w <- out$z[1:k]
   
   # Return the fitted model parameters and other optimization info. 
-  fit <- list(L = L,w = w,x = out$x,maxd = out$maxd,obj = out$obj,
-              ipsolver = out[c("mu","sigma","rx","rc","alpha","ls","x")])
+  fit <- list(L = L,w = w,maxd = out$maxd,timing = out$timing,
+              ipsolver = out[setdiff(names(out),c("max","timing"))])
+  
   class(fit) <- c("mixopt","list")
   return(fit)
 }
