@@ -198,7 +198,7 @@ compare the output of the IP method to running
 REBayes:KWDual(L,rep(1,k),rep(1,n))
 ```
 
-## Plots comparing the EM and IP solutions
+## Plots showing improvement in EM & IP solutions over time
 
 This first plot shows the (maximum) change in the mixture weights
 against the running time of the EM algorithm.
@@ -279,16 +279,19 @@ print(plot_grid(adjust.plot(p1),adjust.plot(p3),
                 adjust.plot(p2),adjust.plot(p4)))
 ```
 
-These plots show the different behaviour of the EM and IP methods:
+Points in the plots indicate individual iterations.
 
-+ The IP method moves quickly toward the solution to the convex
-  optimization problem, but each iteration is more expensive.
+I plotted the results in this way to show the *improvement in the
+solution over time.* In this way, we can clearly see the differences
+in how the EM and IP methods behave:
 
-+ Most importantly, the EM algorithm never quite reaches the
-  stationary point; this deceptively simple optimization problem
-  highlights the extremely poor convergence properties of the EM
-  iterates. By contrast, the IP method has much stronger convergence
-  to the solution.
++ The IP method moves quickly toward the solution, but each iteration
+  is more expensive.
+
++ The EM algorithm never quite reaches the solution; the panels in the
+  top row both highlight the poor convergence properties of EM. By
+  contrast, the IP method exhibits much more rapid convergence to the
+  solution.
 
 ## Session information
 
