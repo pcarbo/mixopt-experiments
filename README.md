@@ -1,12 +1,14 @@
 # mixopt
 
 Empirical comparisons of algorithms for solving the "mixture
-distribution" optimization problem. See the code and results
-[here](https://pcarbo.github.io/mixopt).
+distribution" optimization problem. See
+[here](https://pcarbo.github.io/mixopt) for the
+code and results.
 
 ## How to build the webpages
 
-Run the following commands in R from the analysis directory:
+Run the following commands in R from the [analysis](analysis)
+directory:
 
 ```
 library(rmarkdown)

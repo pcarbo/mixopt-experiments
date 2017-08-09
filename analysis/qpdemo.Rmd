@@ -1,5 +1,5 @@
 ---
-title: "QP demo of interior-point method"
+title: "QP demo of interior-point solver"
 author: "Peter Carbonetto"
 date: August 9, 2017
 output:
