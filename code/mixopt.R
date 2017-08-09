@@ -31,8 +31,10 @@ scale.cols <- function (A, b)
 mixopt.objective <- function (L, w)
   -sum(log(drop(L %*% w) + eps))
 
-# TO DO: Explain what this function does, and how to use it.
-# Refer to Extreme Deconvolution paper for EM algorithm.
+# Fit a mixture model using EM. Input argument L is the n x k
+# conditional likelihood matrix, where n is the number of samples and
+# k is the number of mixture components; optional input argument w is
+# the initial estimate of the mixture weights.
 mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
 
   # Get the number of mixture components.
@@ -112,8 +114,11 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
   return(fit)
 }
 
-# TO DO: Explain what this function does, and how to use it.
-# Refer to REBayes paper for formulation of dual problem.
+# Fit a mixture model by solving the dual problem using a primal-dual
+# interior-point method; see ipsolver.R for algorithm details, and see
+# the REBayes paper for formulation of dual problem. Input argument L
+# is the n x k conditional likelihood matrix, where n is the number of
+# samples and k is the number of mixture components
 mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
 
   # Get the number of samples.
