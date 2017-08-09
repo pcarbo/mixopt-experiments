@@ -110,3 +110,12 @@ cat("Solution:\n")
 options(digits = 4)
 print(out$x)
 ```
+
+## Session information
+
+This is the version of R and the packages that were used to generate
+these results.
+
+```{r session-info}
+sessionInfo()
+```
