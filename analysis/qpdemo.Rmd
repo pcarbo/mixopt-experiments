@@ -19,11 +19,10 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-This short analysis demonstrates the use of the primal-dual
-interior-point solver to compute the solution to a quadratic program
-with convex objective (*i.e.*, positive-definite Hessian) and convex,
-quadratic inequality constraints. More precisely, it finds the
-solution to the following optimization problem:
+This is a small demonstration of the primal-dual interior-point method
+for solving a quadratic program with convex objective (*i.e.*,
+positive-definite Hessian) and convex, quadratic inequality
+constraints:
 
 $$
 \begin{array}{ll}
@@ -32,14 +31,16 @@ $$
 \end{array}
 $$
 
-where the inequality constraints are quadratic functions:
+in which the inequality constraints are quadratic functions,
 
 $$
-c_i(x) = t(x)^TP_ix/2 + ri^Tx.
+c_i(x) = x^TP_ix/2 + r_i^Tx.
 $$
 
-This particular example comes from the book, H. P. Schwefel (1995)
-Evolution and Optimum Seeking. The minimium occurs at $(0,1,2,-1)$.
+This particular example comes from:
+
+H. P. Schwefel (1995) Evolution and Optimum Seeking. The minimium
+occurs at $(0,1,2,-1)$.
 
 ## Define problem
 
@@ -50,7 +51,7 @@ H <- diag(c(2,2,4,2))
 u <- c(-5,-5,-21,7)
 ```
 
-This data structure efines the quadratic inequality constraints.
+This data structure specifies the quadratic inequality constraints.
 
 ```{r qp-constraints}
 constraints <-
@@ -76,9 +77,10 @@ quadf <- function (x, A, b, c = 0)
   qnorm(x,A)^2/2 + sum(b*x) + c
 ```
 
-This function computes the m x n Jacobian of the vector-valued
-constraint function, and the the n x n Hessian of the Lagrangian
-(minus the Hessian of the objective) for the quadratic program.
+This function computes the $m \times n$ Jacobian of the vector-valued
+constraint function, and the the $n \times n$ Hessian of the
+Lagrangian (minus the Hessian of the objective) for the quadratic
+program.
 
 ```{r qpjacobian}
 qpjacobian <- function (x, z, constraints) {
@@ -100,6 +102,7 @@ solver.
 
 ```{r ip}
 source("../code/ipsolver.R")
+options(digits = 4)
 out <- ipsolver(x      = rep(0,4),
                 obj    = function (x) quadf(x,H,u),
                 grad   = function (x) list(g = drop(H %*% x + u),H = H),
@@ -107,9 +110,10 @@ out <- ipsolver(x      = rep(0,4),
                                         function (a) with(a,quadf(x,P,r,-b))),
                 jac    = function (x, z) qpjacobian(x,z,constraints))
 cat("Solution:\n")
-options(digits = 4)
 print(out$x)
 ```
+
+Compare the ipsolver output against the analytical solution given above.
 
 ## Session information
 

@@ -11,8 +11,8 @@ output:
 
 ## Overview
 
-This website contains the code and results for my exploratory analyses
-of the "mixture distribution" optimization problem. See
+This website contains the code and results implementing my exploratory
+analyses of the "mixture distribution" optimization problem. See
 [here](normmix.html) for a brief description of the problem.
 
 These are the results of my analyses. All the webpages were generated
