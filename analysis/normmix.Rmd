@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
   results   = "hold",
   collapse  = TRUE,
   fig.align = "center",
-  fig.path  = paste0("figure/", knitr::current_input(), "/"))
+  fig.path  = paste0("../docs/figure/",knitr::current_input(),"/"))
 ```
 
 ## Introduction
