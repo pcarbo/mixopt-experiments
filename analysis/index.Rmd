@@ -18,8 +18,7 @@ of the "mixture distribution" optimization problem. See
 These are the results of my analyses. All the webpages were generated
 by rendering the [R Markdown
 documents](https://github.com/pcarbo/mixopt/tree/master/analysis) into
-webpages, and they should be reproducible an your computer; 
-please see the [source code](https://github.com/pcarbo/mixopt).
+webpages, and they should be reproducible an your computer.
 
 1. [QP demo of interior-point solver.](qpdemo.html)
 
@@ -28,7 +27,7 @@ problem.](normmix.html)
 
 ## Credits
 
-This workflowr project was developed by [Peter
+This project was developed by [Peter
 Carbonetto](http://pcarbo.github.io) at the [University of
 Chicago](https://www.uchicago.edu), with contributions from [Youngseok 
 Kim](https://github.com/hamulmyo) and [Matthew 
