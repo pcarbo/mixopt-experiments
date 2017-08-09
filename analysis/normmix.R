@@ -23,6 +23,7 @@ s <- c(0.01,10^(seq(-2,0,length.out = 39)))
 # Load the data simulation functions, likelihood computation functions
 # and optimization algorithms into the R environment.
 library(Matrix)
+library(scales)
 library(ggplot2)
 library(cowplot)
 source("../code/datasim.R")
@@ -64,8 +65,12 @@ cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
 
 # PLOT OPTIMIZATION RESULTS
 # -------------------------
+adjust.plot <- function (p)
+  p + theme_cowplot(font_size = 9) +
+    theme(plot.title = element_text(face = "plain"))
+
 # Show the (maximum) change in the mixture weights vs. time running
-# the EM algorihtm.
+# the EM algorithm.
 m  <- length(fit.em$maxd)
 i  <- 2:(m-1)
 p1 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
@@ -73,10 +78,10 @@ p1 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
              aes(x = time,y = maxd)) +
   geom_line(col = "darkorange",size = 0.5) +
   geom_point(col = "darkorange",shape = 20) +
-  theme_cowplot(font_size = 9) +
-  scale_y_log10() +
-  labs(x = "elapsed time (seconds)",
-       y = "max. change in solution")
+  scale_y_continuous(breaks = 10^seq(-4,-1),trans = "log10") +
+  labs(x     = "elapsed time (seconds)",
+       y     = "max. change in solution",
+       title = "EM algorithm")
 
 # Show the (maximum) change in the mixture weights vs. time running
 # the interior-point method.
@@ -87,24 +92,24 @@ p2 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
              aes(x = time,y = maxd)) +
   geom_line(col = "darkblue",size = 0.5) +
   geom_point(col = "darkblue",shape = 20) +
-  theme_cowplot(font_size = 9) +
-  scale_y_log10() +
-  labs(x = "elapsed time (seconds)",
-       y = "max. change in solution")
+  scale_y_continuous(breaks = 10^(-3:1),trans = "log10") +
+  labs(x     = "elapsed time (seconds)",
+       y     = "max. change in solution",
+       title = "IP algorithm")
 
 # Show the value of the (primal) objective function vs. elapsed time
 # running the EM algorithm.
 m  <- length(fit.em$obj)
 i  <- 2:(m-1)
 p3 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
-                        y    = fit.em$obj[i] - min(fit.em$obj)),
+                        y    = fit.em$obj[i] - fit.ip$obj),
                         aes(x = time,y = y)) +
-    geom_line(col = "darkorange",size = 0.5) +
-    geom_point(col = "darkorange",shape = 20) +
-    scale_y_log10() +
-    theme_cowplot(font_size = 9) +
-    labs(x = "elapsed time (seconds)",
-         y = "distance from minimum")
+  geom_line(col = "darkorange",size = 0.5) +
+  geom_point(col = "darkorange",shape = 20) +
+  scale_y_continuous(breaks = 10^(-1:1),trans = "log10") +
+  labs(x     = "elapsed time (seconds)",
+       y     = "distance from primal min.",
+       title = "EM algorithm")
 
 # Show the value of the (dual) objective function vs. elapsed time
 # running the interior-point method.
@@ -113,12 +118,14 @@ i  <- 2:(m-1)
 p4 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
                         y = fit.ip$ipsolver$obj[i] - min(fit.ip$ipsolver$obj)),
                         aes(x = time,y = y)) +
-    geom_line(col = "darkorange",size = 0.5) +
-    geom_point(col = "darkorange",shape = 20) +
-    scale_y_log10() +
-    theme_cowplot(font_size = 9) +
-    labs(x = "elapsed time (seconds)",
-         y = "distance from minimum")
+  geom_line(col = "darkorange",size = 0.5) +
+  geom_point(col = "darkorange",shape = 20) +
+  scale_y_continuous(breaks = 10^seq(-8,2,2),trans = "log10") +
+  labs(x     = "elapsed time (seconds)",
+       y     = "distance from dual min.",
+       title = "IP algorithm")
 
 # Draw all four plots.
-plot_grid(p1,p3,p2,p4)
+print(plot_grid(adjust.plot(p1),adjust.plot(p3),
+                adjust.plot(p2),adjust.plot(p4)))
+

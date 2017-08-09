@@ -108,7 +108,7 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
   # Return the fitted model parameters and other optimization info.
   fit <- list(L = L,w = w,maxd = maxd[1:iter],obj = obj[1:iter],
               timing = timing)
-  class(fit) <- c("mixopt","list")
+  class(fit) <- c("mixopt.em","list")
   return(fit)
 }
 
@@ -145,9 +145,10 @@ mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
   w <- out$z[1:k]
   
   # Return the fitted model parameters and other optimization info. 
-  fit <- list(L = L,w = w,maxd = out$maxd,timing = out$timing,
+  fit <- list(L = L,w = w,obj = mixopt.objective(L,w),
+              maxd = out$maxd,timing = out$timing,
               ipsolver = out[setdiff(names(out),c("max","timing"))])
   
-  class(fit) <- c("mixopt","list")
+  class(fit) <- c("mixopt.ip","list")
   return(fit)
 }
