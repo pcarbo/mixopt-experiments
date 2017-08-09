@@ -1,6 +1,4 @@
-* Convert qpdemo.R script to R Markdown.
 * Convert normmix.R script to R Markdown.
-* Create index.Rmd.
-* Add instructions to README for generating webpages.
+
 
 

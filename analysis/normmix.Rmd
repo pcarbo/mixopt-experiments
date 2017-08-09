@@ -21,8 +21,62 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-TO DO: Give overview of this analysis, and instructions for
-experimenting with different analysis parameters.
+Here, we compare two algorithms for solving what I call the "mixture
+distribution optimization problem." This problem can be motivated from
+many different applications (e..g,
+[Bovy *et al*](http://dx.doi.org/10.1214/10-AOAS439) and
+[this vignette from the REBayes package](https://cran.r-project.org/web/packages/REBayes/vignettes/rebayes.pdf)),
+but can be defined very concisely as follows:
+
+$$
+\begin{array}{ll}
+\mbox{minimize}   &\displaystyle  -\sum_{i=1}^n \log \sum_{j=1}^k L_{ij} w_j \\
+\mbox{subject to} & w_j \geq 0, \mbox{for $j = 1, \ldots, k$} \\
+                  & w_1 + \cdots + w_k = 1
+\end{array}
+$$
+
+This is a convex optimization problem in most circumstances. And, in
+cases where the $L_{ij}$'s can be interpreted as conditional
+likelihoods under some probabilistic model, we can compute the
+solution using a very simple EM algorithm. (In this case, the $w_j$'s
+can be interpreted as the mixture weights for a mixture model.)
+However, as we will see below, this simple EM algorithm is a terrible
+solution, even for very simple models.
+
+(*Note:* we might want to generalize this problem formulation in the
+future to allow for priors on the mixture weights and/or weighted
+samples.)
+
+Here, we compare the EM algorithm against a primal-dual interior-point
+method applied to the dual formulation of this optimization
+problem. We consider the simple situation in which we would like to
+fit a mixture model in which the likelihood is univariate normal,
+possibly with heterogeneous variances, and the prior is a mixture of
+univariate models. Even this very simple case is useful for
+illustrating the properties of the optimization algorithms.
+
+Although there is already an excellent interior-point solution
+implemented in the
+[REBayes package](https://cran.r-project.org/package=REBayes), which
+uses [MOSEK](https://mosek.com) to solve the dual formulation (note
+[IPOPT](https://projects.coin-or.org/Ipopt) also has an R interface),
+here we implement our own primal-dual interior-point method because it
+is useful to get insight into the computation involved. Also,
+eventually it will be useful to optimize the computation to
+accommodate large-scale situations with very large data sets and/or
+large mixtures.
+
+Solving the dual problem probably isn't a good idea because the number
+of optimization variables in the dual problem is on the order of the
+number of samples (see the REBayes package vignette mentioned above),
+but it is a bit simpler to implement because it does not have any
+equality constraints.
+
++ Maybe make this more general?
+
++ Useful to look at the numerical computation involved. In particular,
+  symbolic or automatic differentiation is less insightful.
 
 ## Analysis setup
 
