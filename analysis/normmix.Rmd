@@ -61,7 +61,7 @@ deviations of the normal mixture components.
 s <- c(0.01,10^(seq(-2,0,length.out = 39)))
 ```
 
-## Generate data
+## Generate data set
 
 Simulate a data set with n samples.
 
@@ -93,7 +93,7 @@ cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
             length(fit.em$maxd),out["elapsed"]))
 ```
 
-## Fit mixture model using IP method
+## Fit mixture model using IP solver
 
 The primal-dual interior-point solver is based on the algorithm
 described by [Armand *et al*](https://doi.org/10.1137/S1052623498344720).
@@ -109,8 +109,8 @@ cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
 
 Note that the EM algorithm implements a very simple convergence
 criterion---the maximum difference between the iterates must be
-small---whereas the convergence in the interior-point method is based
-on how close we are to satisfying the KKT optimality conditions.
+small---whereas the convergence in the IP method is based on how close
+we are to satisfying the KKT optimality conditions.
 
 If you have the RMosek and REBayes packages installed, you can
 compare the output of the IP method to running
@@ -119,15 +119,12 @@ compare the output of the IP method to running
 REBayes:KWDual(L,rep(1,k),rep(1,n))
 ```
 
-```{r, include=FALSE}
-# PLOT OPTIMIZATION RESULTS
-# -------------------------
-adjust.plot <- function (p)
-  p + theme_cowplot(font_size = 9) +
-    theme(plot.title = element_text(face = "plain"))
+## Plots comparing the EM and IP solutions
 
-# Show the (maximum) change in the mixture weights vs. time running
-# the EM algorithm.
+This first plot shows the (maximum) change in the mixture weights
+against the running time of the EM algorithm.
+
+```{r plot-delta-vs-time-em}
 m  <- length(fit.em$maxd)
 i  <- 2:(m-1)
 p1 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
@@ -139,9 +136,11 @@ p1 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
   labs(x     = "elapsed time (seconds)",
        y     = "max. change in solution",
        title = "EM algorithm")
+```
 
-# Show the (maximum) change in the mixture weights vs. time running
-# the interior-point method.
+The second plot is the same thing, but for the IP solver.
+
+```{r plot-delta-vs-time-ip}
 m  <- length(fit.ip$maxd)
 i  <- 2:(m-1)
 p2 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
@@ -153,9 +152,12 @@ p2 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
   labs(x     = "elapsed time (seconds)",
        y     = "max. change in solution",
        title = "IP algorithm")
+```
 
-# Show the value of the (primal) objective function vs. elapsed time
-# running the EM algorithm.
+This next plot shows the value of the (primal) objective function
+against running time of the EM algorithm.
+
+```{r}
 m  <- length(fit.em$obj)
 i  <- 2:(m-1)
 p3 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
@@ -167,9 +169,12 @@ p3 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
   labs(x     = "elapsed time (seconds)",
        y     = "distance from primal min.",
        title = "EM algorithm")
+```
 
-# Show the value of the (dual) objective function vs. elapsed time
-# running the interior-point method.
+The fourth and final plot show the value of the dual objective
+function against running time of the IP solver.
+
+```{r}
 m  <- length(fit.ip$ipsolver$obj)
 i  <- 2:(m-1)
 p4 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
@@ -181,8 +186,14 @@ p4 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
   labs(x     = "elapsed time (seconds)",
        y     = "distance from dual min.",
        title = "IP algorithm")
+```
 
-# Draw all four plots.
+Arrange all four plots in a single figure.
+
+```{r plot-grid, figure.width=8, figure.height=5}
+adjust.plot <- function (p)
+  p + theme_cowplot(font_size = 9) +
+    theme(plot.title = element_text(face = "plain"))
 print(plot_grid(adjust.plot(p1),adjust.plot(p3),
                 adjust.plot(p2),adjust.plot(p4)))
 ```
