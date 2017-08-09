@@ -16,7 +16,7 @@ sim <- list(s = c(0,   0.1, 0.2, 0.5),
 # MODEL PARAMETERS
 # ----------------
 # The standard deviations of the normal mixture components. 
-s <- c(0.01,10^(seq(-2,0,length.out = 19)))
+s <- c(0.01,10^(seq(-2,0,length.out = 39)))
 
 # LOAD PACKAGES AND FUNCTIONS
 # ---------------------------
@@ -49,7 +49,7 @@ L <- condlikmatrix.norm(x,se,s)
 # FIT MIXTURE MODEL USING EM ALGORITHM
 # ------------------------------------
 cat("Fitting model using EM.\n")
-out <- system.time(fit.em <- mixopt.em(L))
+out <- system.time(fit.em <- mixopt.em(L,tol = 1e-4))
 cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
 
 # FIT MIXTURE MODEL USING IP METHOD
@@ -62,36 +62,63 @@ cat("Fitting model using interior-point algorithm.\n")
 out <- system.time(fit.ip <- mixopt.dualip(L))
 cat(sprintf("Model fitting took %0.2f seconds.\n",out["elapsed"]))
 
-stop()
-
 # PLOT OPTIMIZATION RESULTS
 # -------------------------
-# TO DO: First show results by iteration instead of elapsed seconds.
-
-# Show the maximum change in the mixture weights at each iteration of
-# the EM algorithm. Here, average r is the amount of time elapsed per
-# iteration.
+# Show the (maximum) change in the mixture weights vs. time running
+# the EM algorihtm.
 m  <- length(fit.em$maxd)
 i  <- 2:(m-1)
-r  <- out["elapsed"] / m
-p1 <- ggplot(data.frame(time = r*i,maxd = fit.em$maxd[i]),
+p1 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
+                        maxd = fit.em$maxd[i]),
              aes(x = time,y = maxd)) +
-    geom_line(col = "darkorange",size = 1) + 
-    theme_cowplot(font_size = 10) +
-    scale_y_log10() +
-    labs(x     = "elapsed time (seconds)",
-         y     = "max. change in solution")
+  geom_line(col = "darkorange",size = 0.5) +
+  geom_point(col = "darkorange",shape = 20) +
+  theme_cowplot(font_size = 9) +
+  scale_y_log10() +
+  labs(x = "elapsed time (seconds)",
+       y = "max. change in solution")
 
-# Show the value of the objective function at each iteration of the EM
-# algorithm.
-p2 <- ggplot(data.frame(time = r*i,y = fit.em$obj[i] - min(fit.em$obj)),
+# Show the (maximum) change in the mixture weights vs. time running
+# the interior-point method.
+m  <- length(fit.ip$maxd)
+i  <- 2:(m-1)
+p2 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
+                        maxd = fit.ip$maxd[i]),
+             aes(x = time,y = maxd)) +
+  geom_line(col = "darkblue",size = 0.5) +
+  geom_point(col = "darkblue",shape = 20) +
+  theme_cowplot(font_size = 9) +
+  scale_y_log10() +
+  labs(x = "elapsed time (seconds)",
+       y = "max. change in solution")
+
+# Show the value of the (primal) objective function vs. elapsed time
+# running the EM algorithm.
+m  <- length(fit.em$obj)
+i  <- 2:(m-1)
+p3 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
+                        y    = fit.em$obj[i] - min(fit.em$obj)),
                         aes(x = time,y = y)) +
-    geom_line(col = "darkorange",size = 1) +
+    geom_line(col = "darkorange",size = 0.5) +
+    geom_point(col = "darkorange",shape = 20) +
     scale_y_log10() +
-    theme_cowplot(font_size = 10) +
-    labs(x     = "elapsed time (seconds)",
-         y     = "distance from minimum")
+    theme_cowplot(font_size = 9) +
+    labs(x = "elapsed time (seconds)",
+         y = "distance from minimum")
 
-# Draw the two plots side-by-side.
-plot_grid(p1,p2)
+# Show the value of the (dual) objective function vs. elapsed time
+# running the interior-point method.
+m  <- length(fit.ip$ipsolver$obj)
+i  <- 2:(m-1)
+p4 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
+                        y = fit.ip$ipsolver$obj[i] - min(fit.ip$ipsolver$obj)),
+                        aes(x = time,y = y)) +
+    geom_line(col = "darkorange",size = 0.5) +
+    geom_point(col = "darkorange",shape = 20) +
+    scale_y_log10() +
+    theme_cowplot(font_size = 9) +
+    labs(x = "elapsed time (seconds)",
+         y = "distance from minimum")
 
+# Draw all four plots.
+plot_grid(p1,p3,p2,p4)
