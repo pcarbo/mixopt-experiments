@@ -198,6 +198,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback, tol = 1e-8,
       S  <- spdiag(z/(b - eps))
       gb <- g - drop((mu/(b - eps)) %*% J)
       M  <- H + W - t(J) %*% S %*% J
+      M  <- forceSymmetric(M)
       px <- drop(solve(M,-gb))
       pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
     } else if (newton.solve == "indef") {

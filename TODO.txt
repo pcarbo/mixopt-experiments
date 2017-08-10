@@ -1,4 +1,4 @@
-Currently there are no "to do" items.
+* Add setup instructions to README and/or index.html/Rmd.
 
 
 
