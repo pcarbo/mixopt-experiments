@@ -10,10 +10,10 @@ spdiag <- function (x)
 # function at (x,z).
 ipsolver.merit <- function (x, z, f, b, mu, eps)
   f - sum(b*z) - mu*sum(log(b^2*z + eps))
-  
+
 # Compute the directional derivative of the merit function at (x,z).
 ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
-  sum(px * (g - drop(t(J) %*% z - 2*mu*t(J) %*% (1./(b - eps))))) -
+  sum(px * (g - drop(z %*% J - (2*mu/(b - eps)) %*% J))) -
     sum(pz * (b + mu/(z + eps)))
 
 # This function is a simple yet reasonably robust implementation of a
@@ -191,11 +191,20 @@ ipsolver <- function (x, obj, grad, constr, jac, callback, tol = 1e-8,
     # SOLUTION TO PERTURBED KKT SYSTEM
     # --------------------------------
     # Compute the search direction of x and z.
-    S  <- spdiag(z/(b - eps))
-    gb <- g - mu*drop((1/(b - eps)) %*% J)
-    px <- drop(solve(H + W - t(J) %*% S %*% J,-gb))
-    pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
+    # S  <- spdiag(z/(b - eps))
+    # gb <- g - drop((mu/(b - eps)) %*% J)
+    # px <- drop(solve(H + W - t(J) %*% S %*% J,-gb))
+    # pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
 
+    # TO DO: Add notes here about how to view the sparsity pattern of
+    # this system of linear equations.
+    M  <- rbind(cbind(H + W,    t(J)),
+                cbind(-z * J,spdiag(-b + eps)))
+    r  <- c(rx,-(rc + mu))
+    p  <- drop(solve(M,-r))
+    px <- p[1:nv]
+    pz <- p[(nv+1):n]
+               
     # BACKTRACKING LINE SEARCH
     # ------------------------
     # To ensure global convergence, execute backtracking line search to

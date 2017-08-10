@@ -108,7 +108,7 @@ mixture weights (w) used to simulate the data.
 
 ```{r data}
 seed <- 1
-n    <- 200
+n    <- 500
 se   <- rep(0.1,n)
 sim  <- list(s = c(0,   0.1, 0.2, 0.5),
              w = c(0.95,0.03,0.01,0.01))
