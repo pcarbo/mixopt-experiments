@@ -1,4 +1,8 @@
-* Convert normmix.R script to R Markdown.
+* Optimize computation in ipsolver.R.
+
+* Look at sparsity pattern of H + W - t(J) %*% S %*% J.
+
+
 
 
 
