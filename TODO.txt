@@ -1,5 +1,7 @@
 * Add setup instructions to README and/or index.html/Rmd.
 
+* Improve the speed of solving the indefinite linear system; e.g.,
+  using an incomplete Choleksy factorization.
 
 
 
