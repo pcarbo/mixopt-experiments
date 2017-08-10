@@ -1,4 +1,4 @@
-* Look at sparsity pattern of H + W - t(J) %*% S %*% J.
+Currently there are no "to do" items.
 
 
 
