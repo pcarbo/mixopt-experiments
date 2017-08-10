@@ -15,8 +15,7 @@ knitr::opts_chunk$set(
   comment   = "#",
   results   = "hold",
   collapse  = TRUE,
-  fig.align = "center",
-  fig.path  = paste0("../docs/figure/",knitr::current_input(),"/"))
+  fig.align = "center")
 ```
 
 ## Introduction
