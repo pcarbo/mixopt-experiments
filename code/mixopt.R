@@ -128,8 +128,10 @@ mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
   x0 <- rep(1/(2*max(L)),n)
 
   # Solve the dual formulation using the primal-dual interior-point
-  # algorithm.
+  # algorithm. Note that the indefinite system for solving the Newton
+  # step is very sparse, so we set newton.solve = "indef".
   out <- ipsolver(x = x0,tol = tol,maxiter = maxiter,verbose = verbose,
+                  newton.solve = "indef",
                
                   # Dual objective.
                   obj = function (x) sum(-log(x + eps)),

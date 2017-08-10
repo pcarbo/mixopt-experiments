@@ -114,9 +114,6 @@ sim  <- list(s = c(0,   0.1, 0.2, 0.5),
              w = c(0.95,0.03,0.01,0.01))
 ```
 
-*Note:* do not make the sample size (n) too large otherwise the
-interior-point method will be very slow. (As I mentioned above.)
-
 Also, note that heterogeneous standard errors (se) are allowed.
 
 Next, I specify the model parameters---specifically, the standard

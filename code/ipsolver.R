@@ -78,7 +78,8 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
 # search before a suitable descent step was found, and (7) any output
 # provided by the optional callback function.
 ipsolver <- function (x, obj, grad, constr, jac, callback, tol = 1e-8,
-                      maxiter = 1e4, verbose = TRUE) {
+                      maxiter = 1e4, newton.solve = "posdef",
+                      verbose = TRUE) {
 
   # Some algorithm parameters.
   eps      <- 1e-8   # A number close to zero.
@@ -190,20 +191,38 @@ ipsolver <- function (x, obj, grad, constr, jac, callback, tol = 1e-8,
 
     # SOLUTION TO PERTURBED KKT SYSTEM
     # --------------------------------
-    # Compute the search direction of x and z.
-    # S  <- spdiag(z/(b - eps))
-    # gb <- g - drop((mu/(b - eps)) %*% J)
-    # px <- drop(solve(H + W - t(J) %*% S %*% J,-gb))
-    # pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
+    if (newton.solve == "posdef") {
 
-    # TO DO: Add notes here about how to view the sparsity pattern of
-    # this system of linear equations.
-    M  <- rbind(cbind(H + W,    t(J)),
-                cbind(-z * J,spdiag(-b + eps)))
-    r  <- c(rx,-(rc + mu))
-    p  <- drop(solve(M,-r))
-    px <- p[1:nv]
-    pz <- p[(nv+1):n]
+      # Compute the search direction of x & z by solving the symmetric
+      # positive definite (s.p.d.) linear system Mx = -gb.
+      S  <- spdiag(z/(b - eps))
+      gb <- g - drop((mu/(b - eps)) %*% J)
+      M  <- H + W - t(J) %*% S %*% J
+      px <- drop(solve(M,-gb))
+      pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
+    } else if (newton.solve == "indef") {
+
+      # Compute the search direction of x & z by solving the
+      # indefinite linear system Mx = -r. It is often more efficient
+      # (and numerically stable) to solve this system instead of the
+      # smaller, s.p.d. system above because the indefinite system is
+      # often extremely sparse, whereas the s.p.d. system can be very
+      # dense. To view the sparsity pattern of this linear system, use
+      # the function from the Matrix package,
+      #
+      #   image(M)
+      #
+      # Note that this system can be easily made symmetric, and likely
+      # can be solved much more efficiently using an incomplete
+      # Choleksy factorization.
+      M  <- rbind(cbind(H + W,    t(J)),
+                  cbind(-z * J,spdiag(-b + eps)))
+      r  <- c(rx,-(rc + mu))
+      p  <- drop(solve(M,-r))
+      px <- p[1:nv]
+      pz <- p[(nv+1):n]
+    } else
+      stop("Input argument \"newton.solve\" should be \"posdef\" or \"indef\"")
                
     # BACKTRACKING LINE SEARCH
     # ------------------------
