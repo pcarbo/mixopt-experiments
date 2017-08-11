@@ -1,4 +1,4 @@
----
+x---
 title: "QP demo of interior-point solver"
 author: "Peter Carbonetto"
 date: August 9, 2017
@@ -41,6 +41,14 @@ This particular example comes from:
 
 H. P. Schwefel (1995) Evolution and Optimum Seeking. The minimium
 occurs at $(0,1,2,-1)$.
+
+Load the packages and function definitions used in this demo.
+
+```{r load-pkgs, message=FALSE}
+library(Matrix)
+source("../code/misc.R")
+source("../code/ipsolver.R")
+```
 
 ## Define problem
 
@@ -101,7 +109,6 @@ Solve the quadratic program using the primal-dual interior-point
 solver.
 
 ```{r ip}
-source("../code/ipsolver.R")
 options(digits = 4)
 out <- ipsolver(x      = rep(0,4),
                 obj    = function (x) quadf(x,H,u),

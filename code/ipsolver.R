@@ -1,11 +1,3 @@
-# Return the quadratic norm (L2-norm) of vector x.
-norm2 <- function (x)
-  sqrt(sum(x^2))
-
-# Return a sparse matrix with diagonal entries x.
-spdiag <- function (x)
-  .symDiagonal(length(x),x)
-
 # Compute the response of the primal-dual interior-point method merit
 # function at (x,z).
 ipsolver.merit <- function (x, z, f, b, mu, eps)

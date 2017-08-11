@@ -5,6 +5,10 @@ distribution" optimization problem. See
 [here](https://pcarbo.github.io/mixopt) for the
 code and results.
 
+## Quick Start
+
+
+
 ## Running the code in the R Markdown documents
 
 If you prefer to run the R Markdown documents as scripts, one simple
