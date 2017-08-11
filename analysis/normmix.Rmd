@@ -1,4 +1,4 @@
-x---
+---
 title: "Illustration of EM and IP solutions to mixture optimization problem"
 author: "Peter Carbonetto"
 date: August 9, 2017
