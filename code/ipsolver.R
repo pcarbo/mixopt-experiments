@@ -198,8 +198,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback, tol = 1e-8,
       S  <- spdiag(z/(b - eps))
       gb <- g - drop((mu/(b - eps)) %*% J)
       M  <- H + W - t(J) %*% S %*% J
-      M  <- forceSymmetric(M)
-      px <- drop(solve(M,-gb))
+      px <- drop(solve(forceSymmetric(M),-gb))
       pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
     } else if (newton.solve == "indef") {
 
@@ -213,9 +212,16 @@ ipsolver <- function (x, obj, grad, constr, jac, callback, tol = 1e-8,
       #
       #   image(M)
       #
-      # Note that this system can be easily made symmetric, and likely
-      # can be solved much more efficiently using an incomplete
-      # Choleksy factorization.
+      # Note that this system can be easily made symmetric by
+      # pre-multiplying the linear system by
+      #
+      #   | I  0 |
+      #   | 0 -Z |
+      #
+      # and likely can be solved much more efficiently using an
+      # incomplete Choleksy factorization. However, it seems that this
+      # might require a specialized method for solving for saddle
+      # point points (see Benzi, Golub & Liesen, 2005, Acta Numerica).
       M  <- rbind(cbind(H + W,    t(J)),
                   cbind(-z * J,spdiag(-b + eps)))
       r  <- c(rx,-(rc + mu))
