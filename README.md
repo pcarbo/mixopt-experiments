@@ -5,9 +5,13 @@ distribution" optimization problem. See
 [here](https://pcarbo.github.io/mixopt) for the
 code and results.
 
-## Quick Start
+## Setup
 
+To reproduce the results of the analyses, install these packages in R:
 
+```R
+install.packages(c("ggplot2","cowplot"))
+```
 
 ## Running the code in the R Markdown documents
 
