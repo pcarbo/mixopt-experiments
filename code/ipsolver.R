@@ -69,9 +69,9 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
 # & rc; (5) the step size, (6) the number of iterations in the line
 # search before a suitable descent step was found, and (7) any output
 # provided by the optional callback function.
-ipsolver <- function (x, obj, grad, constr, jac, callback, tol = 1e-8,
-                      maxiter = 1e4, newton.solve = "posdef",
-                      verbose = TRUE) {
+ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
+                      A = NULL, b = NULL, tol = 1e-8, maxiter = 1e4,
+                      newton.solve = "posdef", verbose = TRUE) {
 
   # Some algorithm parameters.
   eps      <- 1e-8   # A number close to zero.
@@ -156,9 +156,8 @@ ipsolver <- function (x, obj, grad, constr, jac, callback, tol = 1e-8,
                   iter,f,maxd,log10(mu),sigma,norm2(rx),norm2(rc),alpha,ls))
 
     # Execute the callback function, if provided.
-    if (!missing(callback))
-      if (!is.null(callback))
-        out$callback[[iter]] <- callback(x,z)
+    if (!is.null(callback))
+      out$callback[[iter]] <- callback(x,z)
     
     # Save the status of the algorithm.
     out$obj[iter]   <- f
