@@ -1,7 +1,7 @@
 # Compute the response of the primal-dual interior-point method merit
 # function at (x,z).
 ipsolver.merit <- function (x, z, f, d, mu, eps)
-  f - sum(d*z) - mu*sum(log(b^2*z + eps))
+  f - sum(d*z) - mu*sum(log(d^2*z + eps))
 
 # Compute the directional derivative of the merit function at (x,z).
 ipsolver.gradmerit <- function (x, z, px, pz, g, d, J, mu, eps)
@@ -34,7 +34,8 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, d, J, mu, eps)
 # Input argument x0 is the initial point for the solver. Input "tol"
 # is the tolerance of the convergence criterion; it determines when
 # the solver should stop. Input "maxiter" is the maximum number of
-# iterations.
+# iterations. Input "eqc.tol" is the maximum residual allowable
+# residual for the equality constraints Ax = b.
 #
 # The inputs "obj", "grad", "constr" and "jac" are callback functions
 # defined as follows:
@@ -73,7 +74,8 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, d, J, mu, eps)
 # provided by the optional callback function.
 ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
                       A = NULL, b = NULL, tol = 1e-8, maxiter = 1e4,
-                      newton.solve = "posdef", verbose = TRUE) {
+                      newton.solve = "posdef", eqc.tol = 1e-8,
+                      verbose = TRUE) {
 
   # Some algorithm parameters.
   eps      <- 1e-8   # A number close to zero.
@@ -85,17 +87,28 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
   beta     <- 0.75   # Granularity of backtracking search.
   tau      <- 0.01   # Decrease we will accept in line search.
 
+  
   # INITIALIZATION
   # --------------
-  # Get the number of primal variables (nv), the number of inequality
-  # constraints (nc), and the total number of primal-dual optimization
-  # variables (n).
+  # Get the number of primal variables (nv), the number of equality
+  # constriants (ne), the number of inequality constraints (nc), and
+  # the total number of primal-dual optimization variables (n).
   nv <- length(x)
   nc <- length(constr(x))
   n  <- nv + nc
-
-  # Check that x is (primal) feasible.
-  # TO DO.
+  if (!is.null(A) & !is.null(b))
+    ne <- length(b)
+  else
+    ne <- 0
+  
+  # Check that x is an interior point and satisfies equality constraints..
+  if (constr(x) >= 0)
+    stop(paste("Initial iterate \"x\" is not an interior point; i.e., does",
+               "not satisfy c(x) < 0 for inequality constraints c(x)"))
+  else if (ne > 0)
+    if (max(abs(A %*% x - b)) > eqc.tol)
+      stop(paste("Initial iterate \"x\" does not satisfy equality constraints",
+                 "Ax = b within specified tolerance \"eqc.tol\""))
   
   # Initialize the Lagrange multipliers.
   z <- rep(1,nc)
@@ -219,10 +232,16 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       # incomplete Choleksy factorization. However, it seems that this
       # might require a specialized method for solving for saddle
       # point points (see Benzi, Golub & Liesen, 2005, Acta Numerica).
-      M  <- rbind(cbind(H + W,    t(J)),
-                  cbind(-z * J,spdiag(-d + eps)))
-      r  <- c(rx,-(rc + mu))
-      p  <- drop(solve(M,-r))
+      M <- rbind(cbind(H + W,    t(J)),
+                 cbind(-z * J,spdiag(-d + eps)))
+      r <- c(rx,-(rc + mu))
+      if (ne > 0) {
+        M <- rbind(cbind(M,rbind(t(A),
+                                 spzeros(nc,ne))),
+                   cbind(A,spzeros(ne,nc + ne)))
+        r <- c(r,rep(0,ne))
+      }
+        p  <- drop(solve(M,-r))
       px <- p[1:nv]
       pz <- p[(nv+1):n]
     } else
@@ -255,7 +274,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       f      <- obj(xnew)
       d      <- constr(xnew)
       psinew <- ipsolver.merit(xnew,znew,f,d,mu,eps)
-      
+
       # Stop backtracking search if we've found a candidate point that
       # sufficiently decreases the merit function and satisfies all the
       # constraints.
