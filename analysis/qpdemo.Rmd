@@ -1,4 +1,4 @@
----
+x---
 title: "QP demo of interior-point solver"
 author: "Peter Carbonetto"
 date: August 9, 2017
@@ -86,8 +86,8 @@ quadf <- function (x, A, b, c = 0)
 ```
 
 This function computes the $m \times n$ Jacobian of the vector-valued
-constraint function, and the the $n \times n$ Hessian of the
-Lagrangian (minus the Hessian of the objective) for the quadratic
+inequality constraint function, and the the $n \times n$ Hessian of
+the Lagrangian (minus the Hessian of the objective) for the quadratic
 program.
 
 ```{r qpjacobian}
