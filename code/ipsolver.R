@@ -1,17 +1,18 @@
 # Compute the response of the primal-dual interior-point method merit
 # function at (x,z).
-ipsolver.merit <- function (x, z, f, b, mu, eps)
-  f - sum(b*z) - mu*sum(log(b^2*z + eps))
+ipsolver.merit <- function (x, z, f, d, mu, eps)
+  f - sum(d*z) - mu*sum(log(b^2*z + eps))
 
 # Compute the directional derivative of the merit function at (x,z).
-ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
-  sum(px * (g - drop(z %*% J - (2*mu/(b - eps)) %*% J))) -
-    sum(pz * (b + mu/(z + eps)))
+ipsolver.gradmerit <- function (x, z, px, pz, g, d, J, mu, eps)
+  sum(px * (g - drop(z %*% J - (2*mu/(d - eps)) %*% J))) -
+    sum(pz * (d + mu/(z + eps)))
 
 # This function is a simple yet reasonably robust implementation of a
 # primal-dual interior-point solver for convex programs with convex
-# inequality constraints (it does not handle equality constraints).
-# It will compute the solution to the following optimization problem:
+# inequality constraints (it also allows for equality constraints of
+# the form Ax = b). It will compute the solution to the following
+# optimization problem:
 #
 #     minimize    f(x)
 #     subject to  c(x) < 0,
@@ -44,7 +45,8 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
 #   grad takes the same input x and returns a list with
 #   two elements: the gradient and n x n Hessian of the objective at x.
 #
-#   constr returns the value of the constraint function c(x) at x.
+#   constr returns the value of the inequality constraint function
+#   c(x) at x.
 #
 #   jac takes two inputs: the primal variables x and the dual
 #   variables z. The return value is a list with two elements: the m x
@@ -55,7 +57,7 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, b, J, mu, eps)
 #
 #     W = z[1]*W1 + z[2]*W2 + ... + z[m]*Wm,
 #
-#   where Wi is the Hessian of the ith constraint.
+#   where Wi is the Hessian of the ith inequality constraint.
 #
 # There is an optional callback function, "callback", that accepts as
 # input the current primal variables (x) and dual variables (z). It is
@@ -85,12 +87,16 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
 
   # INITIALIZATION
   # --------------
-  # Get the number of primal variables (nv), the number of constraints
-  # (nc), and the total number of primal-dual optimization variables (n).
+  # Get the number of primal variables (nv), the number of inequality
+  # constraints (nc), and the total number of primal-dual optimization
+  # variables (n).
   nv <- length(x)
   nc <- length(constr(x))
   n  <- nv + nc
 
+  # Check that x is (primal) feasible.
+  # TO DO.
+  
   # Initialize the Lagrange multipliers.
   z <- rep(1,nc)
   
@@ -122,12 +128,12 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
 
     # COMPUTE OBJECTIVE, CONSTRAINTS, etc.
     # ------------------------------------
-    # Compute the objective, the gradient of the objective, the
-    # Hessian of the objective, the inequality constraints, the
-    # Jacobian of the inequality constraints, and the Hessian of the
-    # Lagrangian (minus the Hessian of the objective).
+    # Compute the objective (f), the gradient of the objective (g),
+    # the Hessian of the objective (H), the inequality constraints (d),
+    # the Jacobian of the inequality constraints (J), and the Hessian
+    # of the Lagrangian minus the Hessian of the objective (W).
     f <- obj(x)
-    b <- constr(x)
+    d <- constr(x)
     a <- grad(x)
     g <- a$g
     H <- a$H
@@ -139,14 +145,14 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
     # conditions: rx is the dual residual and rc is the
     # complementarity.
     rx <- g + drop(z %*% J)
-    rc <- b*z
+    rc <- d*z
     r0 <- c(rx,rc)
 
     # Set some parameters that affect convergence of the primal-dual
     # interior-point method.
     eta        <- min(etamax,norm2(r0)/n)
     sigma      <- min(sigmamax,sqrt(norm2(r0)/n))
-    dualitygap <- sum(-b*z)
+    dualitygap <- sum(-d*z)
     mu         <- max(mumin,sigma*dualitygap/nc)
     
     # Print the status of the algorithm.
@@ -186,8 +192,8 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
 
       # Compute the search direction of x & z by solving the symmetric
       # positive definite (s.p.d.) linear system Mx = -gb.
-      S  <- spdiag(z/(b - eps))
-      gb <- g - drop((mu/(b - eps)) %*% J)
+      S  <- spdiag(z/(d - eps))
+      gb <- g - drop((mu/(d - eps)) %*% J)
       M  <- H + W - t(J) %*% S %*% J
       px <- drop(solve(forceSymmetric(M),-gb))
       pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
@@ -214,7 +220,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       # might require a specialized method for solving for saddle
       # point points (see Benzi, Golub & Liesen, 2005, Acta Numerica).
       M  <- rbind(cbind(H + W,    t(J)),
-                  cbind(-z * J,spdiag(-b + eps)))
+                  cbind(-z * J,spdiag(-d + eps)))
       r  <- c(rx,-(rc + mu))
       p  <- drop(solve(M,-r))
       px <- p[1:nv]
@@ -235,25 +241,25 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
 
     # Compute the response of the merit function and the directional
     # gradient at the current point and search direction.
-    psi  <- ipsolver.merit(x,z,f,b,mu,eps)
-    dpsi <- ipsolver.gradmerit(x,z,px,pz,g,b,J,mu,eps)
+    psi  <- ipsolver.merit(x,z,f,d,mu,eps)
+    dpsi <- ipsolver.gradmerit(x,z,px,pz,g,d,J,mu,eps)
     ls   <- 0
     while (TRUE) {
 
-      # Compute the candidate iterate, the constraints, and the
-      # response of the objective function and merit function at the
-      # candidate point.
+      # Compute the candidate iterate, the inequality constraints, and
+      # the response of the objective function and merit function at
+      # the candidate point.
       ls     <- ls + 1
       xnew   <- x + alpha * px
       znew   <- z + alpha * pz
       f      <- obj(xnew)
-      b      <- constr(xnew)
-      psinew <- ipsolver.merit(xnew,znew,f,b,mu,eps)
+      d      <- constr(xnew)
+      psinew <- ipsolver.merit(xnew,znew,f,d,mu,eps)
       
       # Stop backtracking search if we've found a candidate point that
       # sufficiently decreases the merit function and satisfies all the
       # constraints.
-      if (sum(b > 0) == 0 & psinew < psi + tau*eta*alpha*dpsi) {
+      if (sum(d > 0) == 0 & psinew < psi + tau*eta*alpha*dpsi) {
         x <- xnew
         z <- znew
         break
