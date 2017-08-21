@@ -44,8 +44,7 @@ jac <- function (x, z)
 # -----------------------------
 # Solve the quadratic program using the primal-dual interior-point
 # solver.
-out <- ipsolver(x = c(0.5,0.75),obj = obj,grad = grad,constr = constr,
-                jac = jac,A = t(matrix(c(1,-2))),b = -1,
-                newton.solve = "indef")
+out <- ipsolver(x = c(0.5,0.75),A = t(matrix(c(1,-2))),b = -1,
+                obj = obj,grad = grad,constr = constr,jac = jac)
 cat("Solution:\n")
 print(out$x)

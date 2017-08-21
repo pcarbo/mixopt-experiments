@@ -74,7 +74,7 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, d, J, mu, eps)
 # provided by the optional callback function.
 ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
                       A = NULL, b = NULL, tol = 1e-8, maxiter = 1e4,
-                      newton.solve = "posdef", eqc.tol = 1e-8,
+                      newton.solve = "indef", eqc.tol = 1e-8,
                       verbose = TRUE) {
 
   # Some algorithm parameters.
@@ -90,7 +90,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
   # INITIALIZATION
   # --------------
   # Get the number of primal variables (nv), the number of equality
-  # constriants (ne) and the number of inequality constraints (nc).
+  # constraints (ne) and the number of inequality constraints (nc).
   nv <- length(x)
   nc <- length(constr(x))
   if (!is.null(A) & !is.null(b)) 
@@ -100,6 +100,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
     b  <- rep(0,0)
     ne <- 0
   }
+  n <- nv + nc
   
   # Check that x is an interior point and satisfies equality constraints.
   if (any(constr(x) >= 0))
@@ -171,8 +172,8 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
 
     # Set some parameters that affect convergence of the primal-dual
     # interior-point method.
-    eta        <- min(etamax,norm2(r0)/(nv + nc))
-    sigma      <- min(sigmamax,sqrt(norm2(r0)/(nv + nc)))
+    eta        <- min(etamax,norm2(r0)/n)
+    sigma      <- min(sigmamax,sqrt(norm2(r0)/n))
     dualitygap <- sum(-d*z)
     mu         <- max(mumin,sigma*dualitygap/nc)
 
@@ -203,7 +204,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
     # -----------------
     # If the norm of the responses is less than the specified tolerance,
     # we are done. 
-    if (norm2(r0)/(nv + nc) < tol)
+    if (norm2(r0)/n < tol)
       break
 
     # Save the current iterate.
@@ -213,8 +214,11 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
     # --------------------------------
     if (newton.solve == "posdef") {
 
-      # Compute the search direction of x & z by solving the symmetric
-      # positive definite (s.p.d.) linear system Mx = -gb.
+      # Compute the search direction of x, y and z by solving the
+      # symmetric positive definite (s.p.d.) linear system Mx = -gb.
+      #
+      # TO DO: Add linear equality constraints Ax = b.
+      #
       S  <- spdiag(z/(d - eps))
       gb <- g - drop((mu/(d - eps)) %*% J)
       M  <- H + W - t(J) %*% S %*% J
@@ -222,7 +226,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
     } else if (newton.solve == "indef") {
 
-      # Compute the search direction of x & z by solving the
+      # Compute the search direction of x, y and z by solving the
       # indefinite linear system Mx = -r. It is often more efficient
       # (and numerically stable) to solve this system instead of the
       # smaller, s.p.d. system above because the indefinite system is
@@ -232,8 +236,10 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       #
       #   image(M)
       #
-      # Note that this system can be easily made symmetric by
-      # pre-multiplying the linear system by
+      # Note that this system can be easily made symmetric (for
+      # simplicity, here we give the special case when there are no
+      # linear equality constraints) by pre-multiplying the linear
+      # system by
       #
       #   | I  0 |
       #   | 0 -Z |
@@ -242,12 +248,10 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       # incomplete Choleksy factorization. However, it seems that this
       # might require a specialized method for solving for saddle
       # point points (see Benzi, Golub & Liesen, 2005, Acta Numerica).
-      M <- rbind(cbind(H + W,    t(J)),
-                 cbind(-z * J,spdiag(-d + eps)))
-      r <- c(rx,-(rc + mu),rep(0,ne))
-      if (ne > 0)
-        M <- rbind(cbind(M,rbind(t(A),spzeros(nc,ne))),
-                   cbind(A,spzeros(ne,nc + ne)))
+      M  <- rbind(cbind(H + W,  t(J),           t(A)),
+                  cbind(-z * J, spdiag(-d+eps), spzeros(nc,ne)),
+                  cbind(A,      spzeros(ne,nc), spzeros(ne,ne)))
+      r  <- c(rx,-(rc + mu),rep(0,ne))
       p  <- drop(solve(M,-r))
       px <- p[1:nv]
       p  <- p[-(1:nv)]
@@ -299,7 +303,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       # the step size for 0 < beta < 1.
       alpha <- alpha * beta
       if (alpha < alphamin)
-        stop("Step size too small")
+        stop("Step size too small; consider increasing \"tol\"")
     }
   }
 

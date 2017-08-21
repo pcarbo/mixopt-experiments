@@ -1,9 +1,11 @@
-* Deal with "step size too small" issue.
-
 * Implement equality constraints in newton.solve = "posdef".
 
 * Convert qpdemo2.R to R Markdown.
 
-* Update index.Rmd and index.html.
+* Test qpdemo.Rmd with newton.solve = "indef".
 
+* Test qpdemo.Rmd with newton.solve = "posdef".
 
+* Test qpdemo2.Rmd with newton.solve = "indef".
+
+* Test qpdemo2.Rmd with newton.solve = "posdef".
