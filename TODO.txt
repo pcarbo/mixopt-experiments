@@ -1,3 +1,9 @@
 * Deal with "step size too small" issue.
 
-* Test new ipsolver on "qpdemo".
+* Implement equality constraints in newton.solve = "posdef".
+
+* Convert qpdemo2.R to R Markdown.
+
+* Update index.Rmd and index.html.
+
+
