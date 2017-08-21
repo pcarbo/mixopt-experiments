@@ -110,8 +110,11 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       stop(paste("Initial iterate \"x\" does not satisfy equality constraints",
                  "Ax = b within specified tolerance \"eqc.tol\""))
   
-  # Initialize the Lagrange multipliers.
+  # Initialize the Lagrange multipliers for the inequality constraints
+  # (z) and equality constraints (y)..
   z <- rep(1,nc)
+  if (ne > 0)
+    y <- rep(0,ne)
   
   # Initialize storage for the outputs.
   out <- list(obj      = rep(0,maxiter),
@@ -158,6 +161,8 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
     # conditions: rx is the dual residual and rc is the
     # complementarity.
     rx <- g + drop(z %*% J)
+    if (ne > 0)
+      rx <- rx + drop(y %*% A)
     rc <- d*z
     r0 <- c(rx,rc)
 
@@ -241,9 +246,11 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
                    cbind(A,spzeros(ne,nc + ne)))
         r <- c(r,rep(0,ne))
       }
-        p  <- drop(solve(M,-r))
+      p  <- drop(solve(M,-r))
       px <- p[1:nv]
       pz <- p[(nv+1):n]
+      if (ne > 0)
+        py <- p[n + (1:ne)]
     } else
       stop("Input argument \"newton.solve\" should be \"posdef\" or \"indef\"")
                

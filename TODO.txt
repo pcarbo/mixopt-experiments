@@ -4,5 +4,5 @@
 
 * Deal with "step size too small" issue.
 
-
+* Test new ipsolver on "qpdemo".
 
