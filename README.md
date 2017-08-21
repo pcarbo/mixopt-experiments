@@ -19,7 +19,7 @@ If you prefer to run the R Markdown documents as scripts, one simple
 approach is to use the `purl` function from the `knitr` package, e.g.,
 
 ```R
-source(purl("normmix.Rmd"))
+source(purl("qpdemo.Rmd"))
 ```
 
 ## How to build the webpages
@@ -31,5 +31,6 @@ directory:
 library(rmarkdown)
 render("index.Rmd",output_dir = "../docs")
 render("qpdemo.Rmd",output_dir = "../docs")
+render("qpdemo2.Rmd",output_dir = "../docs")
 render("normmix.Rmd",output_dir = "../docs")
 ```
