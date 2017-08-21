@@ -115,7 +115,8 @@ out <- ipsolver(x      = rep(0,4),
                 grad   = function (x) list(g = drop(H %*% x + u),H = H),
                 constr = function (x) sapply(constraints,
                                         function (a) with(a,quadf(x,P,r,-b))),
-                jac    = function (x, z) qpjacobian(x,z,constraints))
+                jac    = function (x, z) qpjacobian(x,z,constraints),
+				newton.solve = "indef")
 cat("Solution:\n")
 print(out$x)
 ```

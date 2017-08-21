@@ -1,8 +1,3 @@
-* Add checks for Ax = b in iterates.
-
-* Print out residuals of Ax = b in iterates.
-
 * Deal with "step size too small" issue.
 
 * Test new ipsolver on "qpdemo".
-

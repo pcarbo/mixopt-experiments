@@ -86,23 +86,23 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
   alphamin <- 1e-6   # Minimum step size.
   beta     <- 0.75   # Granularity of backtracking search.
   tau      <- 0.01   # Decrease we will accept in line search.
-
   
   # INITIALIZATION
   # --------------
   # Get the number of primal variables (nv), the number of equality
-  # constriants (ne), the number of inequality constraints (nc), and
-  # the total number of primal-dual optimization variables (n).
+  # constriants (ne) and the number of inequality constraints (nc).
   nv <- length(x)
   nc <- length(constr(x))
-  n  <- nv + nc
-  if (!is.null(A) & !is.null(b))
+  if (!is.null(A) & !is.null(b)) 
     ne <- length(b)
-  else
+  else {
+    A  <- matrix(0,0,nv)
+    b  <- rep(0,0)
     ne <- 0
+  }
   
-  # Check that x is an interior point and satisfies equality constraints..
-  if (constr(x) >= 0)
+  # Check that x is an interior point and satisfies equality constraints.
+  if (any(constr(x) >= 0))
     stop(paste("Initial iterate \"x\" is not an interior point; i.e., does",
                "not satisfy c(x) < 0 for inequality constraints c(x)"))
   else if (ne > 0)
@@ -111,10 +111,9 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
                  "Ax = b within specified tolerance \"eqc.tol\""))
   
   # Initialize the Lagrange multipliers for the inequality constraints
-  # (z) and equality constraints (y)..
+  # (z) and equality constraints (y).
   z <- rep(1,nc)
-  if (ne > 0)
-    y <- rep(0,ne)
+  y <- rep(0,ne)
   
   # Initialize storage for the outputs.
   out <- list(obj      = rep(0,maxiter),
@@ -138,10 +137,16 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
   ls    <- 0
   x0    <- 0
   if (verbose)
-    cat(paste("iter     objective max delta log(mu)   sigma   ||rx||  ",
-              "||rc||   alpha #ls\n"))
+    cat(paste("iter       objective  max(d) lg(mu)   sigma  ||rx|| ",
+              "||rc|| max(Ax-b) alpha #ls\n"))
   for (iter in 1:maxiter) {
 
+    # Check that x satisfies equality constraints.
+    if (ne > 0)
+      if (max(abs(A %*% x - b)) > eqc.tol)
+        stop(paste("Iterate does not satisfy equality constraints Ax = b",
+                   "within specified tolerance \"eqc.tol\""))
+  
     # COMPUTE OBJECTIVE, CONSTRAINTS, etc.
     # ------------------------------------
     # Compute the objective (f), the gradient of the objective (g),
@@ -160,24 +165,24 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
     # Compute the unperturbed Karush-Kuhn-Tucker optimality
     # conditions: rx is the dual residual and rc is the
     # complementarity.
-    rx <- g + drop(z %*% J)
-    if (ne > 0)
-      rx <- rx + drop(y %*% A)
+    rx <- g + drop(z %*% J + y %*% A)
     rc <- d*z
     r0 <- c(rx,rc)
 
     # Set some parameters that affect convergence of the primal-dual
     # interior-point method.
-    eta        <- min(etamax,norm2(r0)/n)
-    sigma      <- min(sigmamax,sqrt(norm2(r0)/n))
+    eta        <- min(etamax,norm2(r0)/(nv + nc))
+    sigma      <- min(sigmamax,sqrt(norm2(r0)/(nv + nc)))
     dualitygap <- sum(-d*z)
     mu         <- max(mumin,sigma*dualitygap/nc)
-    
+
     # Print the status of the algorithm.
     maxd <- max(abs(x - x0))
     if (verbose)
-      cat(sprintf("%4d %+0.6e %0.3e %+0.4f %0.1e %0.2e %0.2e %0.1e %03d\n",
-                  iter,f,maxd,log10(mu),sigma,norm2(rx),norm2(rc),alpha,ls))
+      cat(sprintf(paste("%4d %+0.8e %0.1e %+0.3f %0.1e %0.1e %0.1e %0.1e",
+                        "%0.1e %03d\n"),
+                  iter,f,maxd,log10(mu),sigma,norm2(rx),norm2(rc),
+                  max(c(0,abs(A %*% x - b))),alpha,ls))
 
     # Execute the callback function, if provided.
     if (!is.null(callback))
@@ -198,7 +203,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
     # -----------------
     # If the norm of the responses is less than the specified tolerance,
     # we are done. 
-    if (norm2(r0)/n < tol)
+    if (norm2(r0)/(nv + nc) < tol)
       break
 
     # Save the current iterate.
@@ -239,21 +244,18 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       # point points (see Benzi, Golub & Liesen, 2005, Acta Numerica).
       M <- rbind(cbind(H + W,    t(J)),
                  cbind(-z * J,spdiag(-d + eps)))
-      r <- c(rx,-(rc + mu))
-      if (ne > 0) {
-        M <- rbind(cbind(M,rbind(t(A),
-                                 spzeros(nc,ne))),
+      r <- c(rx,-(rc + mu),rep(0,ne))
+      if (ne > 0)
+        M <- rbind(cbind(M,rbind(t(A),spzeros(nc,ne))),
                    cbind(A,spzeros(ne,nc + ne)))
-        r <- c(r,rep(0,ne))
-      }
       p  <- drop(solve(M,-r))
       px <- p[1:nv]
-      pz <- p[(nv+1):n]
-      if (ne > 0)
-        py <- p[n + (1:ne)]
+      p  <- p[-(1:nv)]
+      pz <- p[1:nc]
+      py <- p[-(1:nc)]
     } else
       stop("Input argument \"newton.solve\" should be \"posdef\" or \"indef\"")
-               
+
     # BACKTRACKING LINE SEARCH
     # ------------------------
     # To ensure global convergence, execute backtracking line search to
@@ -277,6 +279,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       # the candidate point.
       ls     <- ls + 1
       xnew   <- x + alpha * px
+      ynew   <- y + alpha * py
       znew   <- z + alpha * pz
       f      <- obj(xnew)
       d      <- constr(xnew)
@@ -287,6 +290,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       # constraints.
       if (sum(d > 0) == 0 & psinew < psi + tau*eta*alpha*dpsi) {
         x <- xnew
+        y <- ynew
         z <- znew
         break
       }
@@ -305,6 +309,6 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
   
   # Return the (primal and dual) solution, and other optimization
   # info.
-  return(c(list(x = x,z = z,timing = timing),
+  return(c(list(x = x,y = y,z = z,timing = timing),
            lapply(out,function (x) x[1:iter])))
 }
