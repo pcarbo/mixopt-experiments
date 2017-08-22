@@ -311,8 +311,7 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
   timing <- timing[1:iter,]
   timing <- subtract.cols(timing,timing[1,])
   
-  # Return the (primal and dual) solution, and other optimization
-  # info.
+  # Return the solution, and other optimization info.
   return(c(list(x = x,y = y,z = z,timing = timing),
            lapply(out,function (x) x[1:iter])))
 }

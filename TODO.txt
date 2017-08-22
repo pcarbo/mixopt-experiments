@@ -8,9 +8,8 @@
 
 * Test qpdemo2.Rmd with newton.solve = "posdef".
 
-* Output equality constraint Lagrange multipliers in ipsolver().
-
 * Revise qpdemo.Rmd.
 
 * Revise qpdemo2.Rmd.
 
+* Implement "mixopt.primalip".

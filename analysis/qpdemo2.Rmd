@@ -22,8 +22,8 @@ knitr::opts_chunk$set(
 This is another small demonstration of the primal-dual interior-point
 method, similar to the [first demo](qpdemo.html), the main difference
 being that this example includes a linear equality constraint. This
-example is Problem 14 (QQR-T1-4) from the Hock & Schittkowski
-collection. The minimium occurs at
+example is Problem 14 (QQR-T1-4) from the [Hock & Schittkowski
+collection](http://www.klaus-schittkowski.de). The minimium occurs at
 
 $$
 ((\sqrt{7} - 1)/2, (\sqrt{7} + 1)/4)
