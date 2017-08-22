@@ -216,14 +216,14 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
 
       # Compute the search direction of x, y and z by solving the
       # symmetric positive definite (s.p.d.) linear system Mx = -gb.
-      #
-      # TO DO: Add linear equality constraints Ax = b.
-      #
       S  <- spdiag(z/(d - eps))
-      gb <- g - drop((mu/(d - eps)) %*% J)
-      M  <- H + W - t(J) %*% S %*% J
-      px <- drop(solve(forceSymmetric(M),-gb))
-      pz <- -(z + mu/(b - eps) + drop(S %*% J %*% px))
+      gb <- c(g - drop((mu/(d - eps)) %*% J - y %*% A),rep(0,ne))
+      M  <- rbind(cbind(H + W - t(J) %*% S %*% J, t(A)),
+                  cbind(A,                        spzeros(ne,ne)))
+      p  <- drop(solve(forceSymmetric(M),-gb))
+      px <- p[1:nv]
+      py <- p[-(1:nv)]
+      pz <- -(z + mu/(d - eps) + drop(S %*% J %*% px))
     } else if (newton.solve == "indef") {
 
       # Compute the search direction of x, y and z by solving the

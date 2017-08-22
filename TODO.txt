@@ -1,12 +1,6 @@
-* Implement equality constraints in newton.solve = "posdef".
-
 * Test qpdemo.Rmd with newton.solve = "indef".
 
 * Test qpdemo.Rmd with newton.solve = "posdef".
-
-* Test qpdemo2.Rmd with newton.solve = "indef".
-
-* Test qpdemo2.Rmd with newton.solve = "posdef".
 
 * Revise qpdemo.Rmd.
 

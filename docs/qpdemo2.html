@@ -132,7 +132,7 @@ div.section {
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>This is another small demonstration of the primal-dual interior-point method, similar to the <a href="qpdemo.html">first demo</a>, the main difference being that this example includes a linear equality constraint. This example is Problem 14 (QQR-T1-4) from the Hock &amp; Schittkowski collection. The minimium occurs at</p>
+<p>This is another small demonstration of the primal-dual interior-point method, similar to the <a href="qpdemo.html">first demo</a>, the main difference being that this example includes a linear equality constraint. This example is Problem 14 (QQR-T1-4) from the <a href="http://www.klaus-schittkowski.de">Hock &amp; Schittkowski collection</a>. The minimium occurs at</p>
 <p><span class="math display">\[
 ((\sqrt{7} - 1)/2, (\sqrt{7} + 1)/4)
 \]</span></p>
@@ -167,7 +167,7 @@ out &lt;- ipsolver(x = c(0.5,0.75),A = t(matrix(c(1,-2))),b = -1,
 cat(&quot;IP solution:\n&quot;)
 print(out$x)
 cat(&quot;Compare against the analytic solution:\n&quot;)
-c((sqrt(7) - 1)/2, (sqrt(7) + 1)/4)
+print(c((sqrt(7) - 1)/2, (sqrt(7) + 1)/4))
 # iter       objective  max(d) lg(mu)   sigma  ||rx||  ||rc|| max(Ax-b) alpha #ls
 #    1 +2.31250000e+00 7.5e-01 -0.727 5.0e-01 2.9e+00 3.8e-01 0.0e+00 0.0e+00 000
 #    2 +1.53708900e+00 2.7e-01 -1.277 5.0e-01 1.4e+00 1.1e-01 2.2e-16 5.6e-01 003
