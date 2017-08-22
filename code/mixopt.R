@@ -91,6 +91,53 @@ mixopt.em <- function (L, w, maxiter = 1e4, tol = 1e-4, verbose = TRUE) {
   return(fit)
 }
 
+# Fit a mixture model by solving the primal problem using a
+# primal-dual interior-point method; see ipsolver.R for algorithm
+# details. Input argument L is the n x k conditional likelihood
+# matrix, where n is the number of samples and k is the number of
+# mixture components
+mixopt.ip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
+
+  # Get the number of mixture components.
+  k <- ncol(L)
+    
+  # Solve the dual formulation using the primal-dual interior-point
+  # algorithm. Note that the indefinite system for solving the Newton
+  # step is very sparse, so we set newton.solve = "indef".
+  out <- ipsolver(x = rep(1/k,k),tol = tol,maxiter = maxiter,
+                  verbose = verbose,newton.solve = "indef",
+                  A = matrix(1,1,k),b = 1,
+                  
+                  # Objective.
+                  obj = function (x) mixopt.objective(L,w),
+
+                  # Gradient & Hessian of objective.
+                  grad = function (x) {
+                    y <- c(L %*% x)
+                    return(g = -colSums(L/(y + eps)),
+                           H = H)
+                  },
+                  
+                  # Inequality constraints.
+                  constr = function (x) -x,
+
+                  # Jacobian matrix & Hessian of Lagrangian.
+                  jac = function (x, z)
+                    list(J = -speye(k),
+                         W = spzeros(k,k)))
+  
+  # Recover the dual solution (which gives the mixture weights).
+  w <- out$z[1:k]
+  
+  # Return the fitted model parameters and other optimization info. 
+  fit <- list(L = L,w = w,obj = mixopt.objective(L,w),
+              maxd = out$maxd,timing = out$timing,
+              ipsolver = out[setdiff(names(out),c("max","timing"))])
+  
+  class(fit) <- c("mixopt.ip","list")
+  return(fit)
+}
+
 # Fit a mixture model by solving the dual problem using a primal-dual
 # interior-point method; see ipsolver.R for algorithm details, and see
 # the REBayes paper for formulation of dual problem. Input argument L
@@ -136,3 +183,4 @@ mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
   class(fit) <- c("mixopt.ip","list")
   return(fit)
 }
+
