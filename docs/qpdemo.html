@@ -143,8 +143,7 @@ div.section {
 <p><span class="math display">\[
 c_i(x) = x^TP_ix/2 + r_i^Tx.
 \]</span></p>
-<p>This particular example comes from:</p>
-<p>H. P. Schwefel (1995) Evolution and Optimum Seeking. The minimium occurs at <span class="math inline">\((0,1,2,-1)\)</span>.</p>
+<p>This example comes from: H. P. Schwefel (1995) Evolution and Optimum Seeking. The minimium occurs at <span class="math inline">\((0,1,2,-1)\)</span>.</p>
 <p>Load the packages and function definitions used in this demo.</p>
 <pre class="r"><code>library(Matrix)
 source(&quot;../code/misc.R&quot;)
@@ -182,7 +181,7 @@ u &lt;- c(-5,-5,-21,7)</code></pre>
   }
   return(list(J = J,W = W))
 }</code></pre>
-<p>Solve the quadratic program using the primal-dual interior-point solver.</p>
+<p>Solve the quadratic program using the primal-dual interior-point solver. Note that the initial interate must satisfy the constraints otherwise the interior-point solver will report an error.</p>
 <pre class="r"><code>options(digits = 4)
 out &lt;- ipsolver(x      = rep(0,4),
                 obj    = function (x) quadf(x,H,u),

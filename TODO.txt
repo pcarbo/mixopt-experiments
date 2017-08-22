@@ -1,9 +1,1 @@
-* Test qpdemo.Rmd with newton.solve = "indef".
-
-* Test qpdemo.Rmd with newton.solve = "posdef".
-
-* Revise qpdemo.Rmd.
-
-* Revise qpdemo2.Rmd.
-
 * Implement "mixopt.primalip".

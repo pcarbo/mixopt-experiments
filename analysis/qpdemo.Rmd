@@ -37,10 +37,8 @@ $$
 c_i(x) = x^TP_ix/2 + r_i^Tx.
 $$
 
-This particular example comes from:
-
-H. P. Schwefel (1995) Evolution and Optimum Seeking. The minimium
-occurs at $(0,1,2,-1)$.
+This example comes from: H. P. Schwefel (1995) Evolution and Optimum
+Seeking. The minimium occurs at $(0,1,2,-1)$.
 
 Load the packages and function definitions used in this demo.
 
@@ -106,7 +104,8 @@ qpjacobian <- function (x, z, constraints) {
 ```
 
 Solve the quadratic program using the primal-dual interior-point
-solver.
+solver. Note that the initial interate must satisfy the constraints
+otherwise the interior-point solver will report an error.
 
 ```{r ip}
 options(digits = 4)
