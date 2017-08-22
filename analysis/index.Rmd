@@ -24,7 +24,7 @@ These are the results of my analyses.
 
 1. [QP demo of interior-point solver.](qpdemo.html)
 
-2. [QP demo with equality constraints.](qpdemo2.html)
+2. [QP demo with linear equality constraints.](qpdemo2.html)
 
 3. [Illustration of EM and IP solutions to mixture optimization 
 problem.](normmix.html)

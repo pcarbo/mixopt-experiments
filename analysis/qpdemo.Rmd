@@ -1,4 +1,4 @@
-x---
+---
 title: "QP demo of interior-point solver"
 author: "Peter Carbonetto"
 date: August 21, 2017
@@ -116,8 +116,10 @@ out <- ipsolver(x      = rep(0,4),
                 constr = function (x) sapply(constraints,
                                         function (a) with(a,quadf(x,P,r,-b))),
                 jac    = function (x, z) qpjacobian(x,z,constraints))
-cat("Solution:\n")
+cat("IP solution:\n")
 print(out$x)
+cat("Compare against the analytic solution:\n")
+print(c(0,1,2,-1))
 ```
 
 Compare the ipsolver output against the analytical solution given above.

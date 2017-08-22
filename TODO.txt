@@ -1,7 +1,5 @@
 * Implement equality constraints in newton.solve = "posdef".
 
-* Convert qpdemo2.R to R Markdown.
-
 * Test qpdemo.Rmd with newton.solve = "indef".
 
 * Test qpdemo.Rmd with newton.solve = "posdef".
@@ -9,3 +7,10 @@
 * Test qpdemo2.Rmd with newton.solve = "indef".
 
 * Test qpdemo2.Rmd with newton.solve = "posdef".
+
+* Output equality constraint Lagrange multipliers in ipsolver().
+
+* Revise qpdemo.Rmd.
+
+* Revise qpdemo2.Rmd.
+
