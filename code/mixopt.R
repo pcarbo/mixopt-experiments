@@ -5,8 +5,12 @@
 # Compute the mixture distribution objective function given n x k
 # conditional likelihood matrix L and mixture weights w, where n is
 # the number of samples and k is the number of mixture components.
-mixopt.objective <- function (L, w)
-  -sum(log(drop(L %*% w) + eps))
+mixopt.objective <- function (L, w) {
+ if (any(w < 0))
+   return(Inf)
+ else
+   return(-sum(log(drop(L %*% w) + eps)))
+}
 
 # Fit a mixture model using EM. Input argument L is the n x k
 # conditional likelihood matrix, where n is the number of samples and
@@ -126,11 +130,11 @@ mixopt.ip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
                     list(J = -speye(k),
                          W = spzeros(k,k)))
   
-  # Return the fitted model parameters and other optimization info. 
-  fit <- list(L = L,w = out$x,obj = mixopt.objective(L,out$x),
-              maxd = out$maxd,timing = out$timing,
-              ipsolver = out[setdiff(names(out),c("max","timing"))])
-  
+  # Return the fitted model parameters and other info returned by the
+  # optimization algorithm.
+  fit <-
+    list(L = L,w = out$x,obj = out$obj,maxd = out$maxd,timing = out$timing,
+         ipsolver = out[setdiff(names(out),c("max","timing","obj"))])
   class(fit) <- c("mixopt.ip","list")
   return(fit)
 }
@@ -168,15 +172,13 @@ mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
                   jac = function (x, z)
                     list(J = rbind(t(L),-speye(n)),
                          W = spzeros(n,n)))
-  
-  # Recover the dual solution (which gives the mixture weights).
-  w <- out$z[1:k]
-  
-  # Return the fitted model parameters and other optimization info. 
-  fit <- list(L = L,w = w,obj = mixopt.objective(L,w),
-              maxd = out$maxd,timing = out$timing,
-              ipsolver = out[setdiff(names(out),c("max","timing"))])
-  
+
+  # Recover the dual solution (which gives the mixture weights), and
+  # return the fitted model parameters and other optimization info
+  # returned by the optimization algorithm.
+  w   <- out$z[1:k]
+  fit <- list(L = L,w = w,obj = mixopt.objective(L,w),timing = out$timing,
+              ipsolver = out[setdiff(names(out),"timing")])
   class(fit) <- c("mixopt.dualip","list")
   return(fit)
 }

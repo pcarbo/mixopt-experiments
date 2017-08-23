@@ -70,13 +70,15 @@ MOSEK). Also, eventually it will be useful to optimize the computation
 to accommodate large-scale situations with very large data sets and/or
 large mixtures.
 
+In this experiment, we use the IP method to solve both the primal
+optimization problem as well as the dual formulation. (See the REBayes
+package vignette mentioned above for the formulation of the dual.)
 Solving the dual problem probably isn't a good idea because the number
 of optimization variables in the dual problem is on the order of the
-number of samples (see the REBayes package vignette mentioned above),
-but it is a bit simpler to implement because it does not have any
-equality constraints. An "action item" is to implement the primal-dual
-interior-point method for the primal problem, which will have a much
-more manageable computational complexity.
+number of samples. However, it is a bit simpler to implement because
+it does not have any equality constraints. As we will see, the IP
+method applied to the primal problem is much faster for data sets with
+large numbers of samples.
 
 There are other reasons why an interior-point method may not be a good
 solution---one important reason is that it doesn't easily allow for an
@@ -108,7 +110,7 @@ mixture weights (w) used to simulate the data.
 
 ```{r data}
 seed <- 1
-n    <- 1000
+n    <- 5000
 se   <- rep(0.1,n)
 sim  <- list(s = c(0,   0.1, 0.2, 0.5),
              w = c(0.95,0.03,0.01,0.01))
@@ -178,7 +180,7 @@ individual iterations are more expensive, but it takes only a small
 number of iterations to converge to a solution.
 
 ```{r, ip}
-out <- system.time(fit.ip <- mixopt.ip(L,tol = 1e-8))
+out <- system.time(fit.ip <- mixopt.ip(L))
 cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
             length(fit.ip$maxd),out["elapsed"]))
 ```
@@ -207,108 +209,73 @@ REBayes:KWDual(L,rep(1,k),rep(1,n))
 
 ## Plots showing improvement in EM & IP solutions over time
 
-This first plot shows the (maximum) change in the mixture weights
-against the running time of the EM algorithm.
+This first plot shows the maximum change in the solution against the
+running time of the EM algorithm.
 
 ```{r plot-delta-vs-time-em}
-m  <- length(fit.em$maxd)
-i  <- 2:(m-1)
-p1 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
-                        maxd = fit.em$maxd[i]),
-             aes(x = time,y = maxd)) +
-  geom_line(col = "darkorange",size = 0.5) +
-  geom_point(col = "darkorange",shape = 20) +
-  scale_y_continuous(breaks = 10^seq(-4,-1),trans = "log10") +
-  labs(x     = "elapsed time (seconds)",
-       y     = "max. change in solution",
-       title = "EM algorithm")
+plot.delta.vs.time <- function (timing, maxd, color, plot.title) {
+  m  <- length(maxd)
+  i  <- 2:(m-1)
+  return(ggplot(data.frame(time = timing[i,"elapsed"],
+                           maxd = maxd[i]),
+                aes(x = time,y = maxd)) +
+         geom_line(col = color,size = 0.5) +
+         geom_point(col = color,shape = 20) +
+         scale_y_continuous(breaks = 10^seq(-4,2),trans = "log10") +
+         labs(x     = "elapsed time (seconds)",
+              y     = "max. change in solution",
+              title = plot.title))
+}
+p1 <- plot.delta.vs.time(fit.em$timing,fit.em$maxd,"darkorange","EM algorithm")
 ```
 
-The second plot is the same thing, but for the IP solver.
+The next two plots also show the maximum change in the solution at
+each iteration, but for the IP solvers.
 
-```{r plot-delta-vs-time-primalip}
-m  <- length(fit.ip$maxd)
-i  <- 2:(m-1)
-p2 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
-                        maxd = fit.ip$maxd[i]),
-             aes(x = time,y = maxd)) +
-  geom_line(col = "orangered",size = 0.5) +
-  geom_point(col = "orangered",shape = 20) +
-  scale_y_continuous(breaks = 10^(-3:1),trans = "log10") +
-  labs(x     = "elapsed time (seconds)",
-       y     = "max. change in solution",
-       title = "IP algorithm")
+```{r plot-delta-vs-time-ip}
+p2 <- plot.delta.vs.time(fit.ip$timing,fit.ip$maxd,"royalblue",
+                         "IP algorithm (primal)")
+p3 <- plot.delta.vs.time(fit.dualip$timing,fit.dualip$ipsolver$maxd,
+						 "darkblue","IP algorithm (dual)")
 ```
 
-The third plot is the same thing, but for the IP solver.
+This plot shows the distance of the (primal) objective function to the
+minimum against the running time of the EM algorithm. (Here, we take
+the "minimum" to be the best solution among the three algorithms.)
 
-```{r plot-delta-vs-time-dualip}
-m  <- length(fit.dualip$maxd)
-i  <- 2:(m-1)
-p3 <- ggplot(data.frame(time = fit.dualip$timing[i,"elapsed"],
-                        maxd = fit.dualip$maxd[i]),
-             aes(x = time,y = maxd)) +
-  geom_line(col = "darkblue",size = 0.5) +
-  geom_point(col = "darkblue",shape = 20) +
-  scale_y_continuous(breaks = 10^(-3:1),trans = "log10") +
+```{r plot-objective-vs-time-em}
+best.sol <- min(c(fit.em$obj,fit.ip$obj,fit.dualip$obj))
+plot.obj.vs.time <- function (timing, obj, min.obj, color, plot.title) {
+  m  <- length(obj)
+  i  <- 2:(m-1)
+  return(ggplot(data.frame(time = timing[i,"elapsed"],
+                           y    = obj[i] - min.obj),
+                aes(x = time,y = y)) +
+  geom_line(col = color,size = 0.5) +
+  geom_point(col = color,shape = 20) +
+  scale_y_continuous(breaks = 10^(-6:3),trans = "log10") +
   labs(x     = "elapsed time (seconds)",
-       y     = "max. change in solution",
-       title = "IP algorithm")
+       y     = "dist. from min.",
+       title = plot.title))
+}
+p4 <- plot.obj.vs.time(fit.em$timing,fit.em$obj,best.sol,
+                       "darkorange","EM algorithm")
 ```
 
-This next plot shows the distance of the (primal) objective function
-to the minimum against running time of the EM algorithm. (Here, we
-take the ground-truth minimizer to be the IP solution because it is
-much better than the EM solution.)
+These two plots show the value of the objective against the running
+time of the IP solver. For the dual formulation, the distance to the
+dual objective is shown.
 
-```{r}
-m  <- length(fit.em$obj)
-i  <- 2:(m-1)
-p4 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
-                        y    = fit.em$obj[i] - fit.ip$obj),
-                        aes(x = time,y = y)) +
-  geom_line(col = "darkorange",size = 0.5) +
-  geom_point(col = "darkorange",shape = 20) +
-  scale_y_continuous(breaks = 10^(-1:1),trans = "log10") +
-  labs(x     = "elapsed time (seconds)",
-       y     = "distance from primal min.",
-       title = "EM algorithm")
+```{r plot-objective-vs-time-ip}
+p5 <- plot.obj.vs.time(fit.ip$timing,fit.ip$obj,best.sol,"royalblue",
+                       "IP algorithm (primal)")
+p6 <- plot.obj.vs.time(fit.dualip$timing,fit.dualip$ipsolver$obj,
+                       min(fit.dualip$ipsolver$obj),"darkblue",
+                       "IP algorithm (dual)")
 ```
+Arrange all six plots in a single figure.
 
-The fourth and final plot show the value of the dual objective
-function against running time of the IP solver.
-
-```{r}
-m  <- length(fit.ip$ipsolver$obj)
-i  <- 2:(m-1)
-p5 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
-                        y = fit.ip$ipsolver$obj[i] - min(fit.ip$ipsolver$obj)),
-                        aes(x = time,y = y)) +
-  geom_line(col = "darkorange",size = 0.5) +
-  geom_point(col = "darkorange",shape = 20) +
-  scale_y_continuous(breaks = 10^seq(-8,2,2),trans = "log10") +
-  labs(x     = "elapsed time (seconds)",
-       y     = "distance from dual min.",
-       title = "IP algorithm")
-```
-
-```{r}
-m  <- length(fit.dualip$ipsolver$obj)
-i  <- 2:(m-1)
-p6 <- ggplot(data.frame(time = fit.dualip$timing[i,"elapsed"],
-                        y    = with(fit.dualip$ipsolver,obj[i] - min(obj))),
-                        aes(x = time,y = y)) +
-  geom_line(col = "darkorange",size = 0.5) +
-  geom_point(col = "darkorange",shape = 20) +
-  scale_y_continuous(breaks = 10^seq(-8,2,2),trans = "log10") +
-  labs(x     = "elapsed time (seconds)",
-       y     = "distance from dual min.",
-       title = "IP algorithm")
-```
-
-Arrange all four plots in a single figure.
-
-```{r plot-grid, fig.width=8, fig.height=8}
+```{r plot-grid, fig.width=7, fig.height=7}
 adjust.plot <- function (p)
   p + theme_cowplot(font_size = 12) +
     theme(plot.title = element_text(face = "plain"))
@@ -321,16 +288,20 @@ print(plot_grid(adjust.plot(p1),adjust.plot(p4),
 Points in the plots indicate individual iterations.
 
 I plotted the results in this way to show the *improvement in the
-solution over time.* In this way, we can clearly see the differences
-in how the EM and IP methods behave:
+solution over time.* (With the caveat that the dual formulation of the
+IP method shows the improvement in the dual objective.) In this way,
+we can clearly see the differences in how the EM and IP methods
+behave:
 
-+ The IP method moves quickly toward the solution, but each iteration
++ The IP method moves rapidly toward the solution, but each iteration
   is more expensive.
 
-+ The EM algorithm never quite reaches the solution; the panels in the
-  top row both highlight the poor convergence properties of EM. By
-  contrast, the IP method exhibits much more rapid convergence to the
-  solution.
++ EM algorithm never quite reaches the solution, even after a large
+  number of iterations; the panels in the top row both highlight the
+  poor convergence properties of EM. 
+
++ We also see that the dual IP method is slower to converge than the
+  primal IP, and the per-iteration cost is substantialy higher.
 
 ## Session information
 
