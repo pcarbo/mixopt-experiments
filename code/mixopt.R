@@ -100,7 +100,7 @@ mixopt.ip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
 
   # Get the number of mixture components.
   k <- ncol(L)
-    
+  
   # Solve the dual formulation using the primal-dual interior-point
   # algorithm. Note that the indefinite system for solving the Newton
   # step is very sparse, so we set newton.solve = "indef".
@@ -109,13 +109,13 @@ mixopt.ip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
                   A = matrix(1,1,k),b = 1,
                   
                   # Objective.
-                  obj = function (x) mixopt.objective(L,w),
+                  obj = function (x) mixopt.objective(L,x),
 
                   # Gradient & Hessian of objective.
                   grad = function (x) {
                     y <- c(L %*% x)
-                    return(g = -colSums(L/(y + eps)),
-                           H = H)
+                    return(list(g = -colSums(L/(y + eps)),
+                                H = t(L) %*% diag(1/y^2) %*% L))
                   },
                   
                   # Inequality constraints.
@@ -126,11 +126,8 @@ mixopt.ip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
                     list(J = -speye(k),
                          W = spzeros(k,k)))
   
-  # Recover the dual solution (which gives the mixture weights).
-  w <- out$z[1:k]
-  
   # Return the fitted model parameters and other optimization info. 
-  fit <- list(L = L,w = w,obj = mixopt.objective(L,w),
+  fit <- list(L = L,w = out$x,obj = mixopt.objective(L,out$x),
               maxd = out$maxd,timing = out$timing,
               ipsolver = out[setdiff(names(out),c("max","timing"))])
   
@@ -154,8 +151,8 @@ mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
   # Solve the dual formulation using the primal-dual interior-point
   # algorithm. Note that the indefinite system for solving the Newton
   # step is very sparse, so we set newton.solve = "indef".
-  out <- ipsolver(x = x0,tol = tol,maxiter = maxiter,verbose = verbose,
-                  newton.solve = "indef",
+  out <- ipsolver(x = x0,tol = tol,maxiter = maxiter,
+                  verbose = verbose,newton.solve = "indef",
                
                   # Dual objective.
                   obj = function (x) sum(-log(x + eps)),
@@ -180,7 +177,7 @@ mixopt.dualip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
               maxd = out$maxd,timing = out$timing,
               ipsolver = out[setdiff(names(out),c("max","timing"))])
   
-  class(fit) <- c("mixopt.ip","list")
+  class(fit) <- c("mixopt.dualip","list")
   return(fit)
 }
 

@@ -1,7 +1,7 @@
 ---
 title: "Illustration of EM and IP solutions to mixture optimization problem"
 author: "Peter Carbonetto"
-date: August 9, 2017
+date: August 23, 2017
 output:
   html_document:
     theme: readable
@@ -169,7 +169,7 @@ cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
             length(fit.em$maxd),out["elapsed"]))
 ```
 
-## Fit mixture model using IP solver
+## Fit mixture model using IP solver---primal formulation
 
 The primal-dual interior-point solver is based on the algorithm
 described by [Armand *et al*](https://doi.org/10.1137/S1052623498344720).
@@ -178,9 +178,19 @@ individual iterations are more expensive, but it takes only a small
 number of iterations to converge to a solution.
 
 ```{r, ip}
-out <- system.time(fit.ip <- mixopt.dualip(L))
+out <- system.time(fit.ip <- mixopt.ip(L,tol = 1e-8))
 cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
             length(fit.ip$maxd),out["elapsed"]))
+```
+
+## Fit mixture model using IP solver---dual formulation
+
+Dual optimization problem
+
+```{r, dualip}
+out <- system.time(fit.dualip <- mixopt.dualip(L))
+cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
+            length(fit.dualip$maxd),out["elapsed"]))
 ```
 
 The EM algorithm implements a very simple convergence criterion---the
@@ -216,11 +226,27 @@ p1 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
 
 The second plot is the same thing, but for the IP solver.
 
-```{r plot-delta-vs-time-ip}
+```{r plot-delta-vs-time-primalip}
 m  <- length(fit.ip$maxd)
 i  <- 2:(m-1)
 p2 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
                         maxd = fit.ip$maxd[i]),
+             aes(x = time,y = maxd)) +
+  geom_line(col = "orangered",size = 0.5) +
+  geom_point(col = "orangered",shape = 20) +
+  scale_y_continuous(breaks = 10^(-3:1),trans = "log10") +
+  labs(x     = "elapsed time (seconds)",
+       y     = "max. change in solution",
+       title = "IP algorithm")
+```
+
+The third plot is the same thing, but for the IP solver.
+
+```{r plot-delta-vs-time-dualip}
+m  <- length(fit.dualip$maxd)
+i  <- 2:(m-1)
+p3 <- ggplot(data.frame(time = fit.dualip$timing[i,"elapsed"],
+                        maxd = fit.dualip$maxd[i]),
              aes(x = time,y = maxd)) +
   geom_line(col = "darkblue",size = 0.5) +
   geom_point(col = "darkblue",shape = 20) +
@@ -238,7 +264,7 @@ much better than the EM solution.)
 ```{r}
 m  <- length(fit.em$obj)
 i  <- 2:(m-1)
-p3 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
+p4 <- ggplot(data.frame(time = fit.em$timing[i,"elapsed"],
                         y    = fit.em$obj[i] - fit.ip$obj),
                         aes(x = time,y = y)) +
   geom_line(col = "darkorange",size = 0.5) +
@@ -255,8 +281,22 @@ function against running time of the IP solver.
 ```{r}
 m  <- length(fit.ip$ipsolver$obj)
 i  <- 2:(m-1)
-p4 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
+p5 <- ggplot(data.frame(time = fit.ip$timing[i,"elapsed"],
                         y = fit.ip$ipsolver$obj[i] - min(fit.ip$ipsolver$obj)),
+                        aes(x = time,y = y)) +
+  geom_line(col = "darkorange",size = 0.5) +
+  geom_point(col = "darkorange",shape = 20) +
+  scale_y_continuous(breaks = 10^seq(-8,2,2),trans = "log10") +
+  labs(x     = "elapsed time (seconds)",
+       y     = "distance from dual min.",
+       title = "IP algorithm")
+```
+
+```{r}
+m  <- length(fit.dualip$ipsolver$obj)
+i  <- 2:(m-1)
+p6 <- ggplot(data.frame(time = fit.dualip$timing[i,"elapsed"],
+                        y    = with(fit.dualip$ipsolver,obj[i] - min(obj))),
                         aes(x = time,y = y)) +
   geom_line(col = "darkorange",size = 0.5) +
   geom_point(col = "darkorange",shape = 20) +
@@ -272,8 +312,9 @@ Arrange all four plots in a single figure.
 adjust.plot <- function (p)
   p + theme_cowplot(font_size = 12) +
     theme(plot.title = element_text(face = "plain"))
-print(plot_grid(adjust.plot(p1),adjust.plot(p3),
-                adjust.plot(p2),adjust.plot(p4)))
+print(plot_grid(adjust.plot(p1),adjust.plot(p4),
+                adjust.plot(p2),adjust.plot(p5),
+                adjust.plot(p3),adjust.plot(p6)))
 ```
 
 Points in the plots indicate individual iterations.
