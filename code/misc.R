@@ -29,3 +29,8 @@ norm2 <- function (x)
 spdiag <- function (x)
   .symDiagonal(length(x),x)
 
+# diag(X,a) efficiently computes X'*diag(a^2)*X.
+diagsq <- function (X, a) {
+  Y <- a * X
+  return(t(Y) %*% Y)
+}

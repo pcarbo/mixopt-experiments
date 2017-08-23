@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-Here, we compare two algorithms for solving what I call the "mixture
+Here, we compare three algorithms for solving what I call the "mixture
 distribution optimization problem." This problem can be motivated from
 many different applications (e..g,
 [Bovy *et al*](http://dx.doi.org/10.1214/10-AOAS439) and
@@ -120,7 +120,7 @@ Next, I specify the model parameters---specifically, the standard
 deviations of the normal mixture components.
 
 ```{r model}
-s <- c(0.01,10^(seq(-2,0,length.out = 39)))
+s <- c(0.01,10^(seq(-2,0,length.out = 19)))
 ```
 
 ## Generate data set
@@ -308,13 +308,14 @@ p6 <- ggplot(data.frame(time = fit.dualip$timing[i,"elapsed"],
 
 Arrange all four plots in a single figure.
 
-```{r plot-grid, fig.width=8, fig.height=6}
+```{r plot-grid, fig.width=8, fig.height=8}
 adjust.plot <- function (p)
   p + theme_cowplot(font_size = 12) +
     theme(plot.title = element_text(face = "plain"))
 print(plot_grid(adjust.plot(p1),adjust.plot(p4),
                 adjust.plot(p2),adjust.plot(p5),
-                adjust.plot(p3),adjust.plot(p6)))
+                adjust.plot(p3),adjust.plot(p6),
+				nrow = 3))
 ```
 
 Points in the plots indicate individual iterations.

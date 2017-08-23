@@ -115,7 +115,7 @@ mixopt.ip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
                   grad = function (x) {
                     y <- c(L %*% x)
                     return(list(g = -colSums(L/(y + eps)),
-                                H = t(L) %*% diag(1/y^2) %*% L))
+                                H = diagsq(L,1/y)))
                   },
                   
                   # Inequality constraints.
