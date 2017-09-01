@@ -112,10 +112,13 @@ mixopt.ip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
   out <- ipsolver(x = rep(1/k,k),tol = tol,maxiter = maxiter,
                   verbose = verbose,newton.solve = "indef",
                   
-                  # Objective.
+                  # Unmodified objective.
+                  opt.callback = function (x, z) mixopt.objective(L,x),
+                  
+                  # Modified ojective.
                   obj = function (x) mixopt.objective(L,x) + n*sum(x),
 
-                  # Gradient & Hessian of objective.
+                  # Gradient & Hessian of modified objective.
                   grad = function (x) {
                     y <- c(L %*% x)
                     return(list(g = n - colSums(L/(y + eps)),
@@ -130,15 +133,16 @@ mixopt.ip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
                     list(J = -speye(k),
                          W = spzeros(k,k)))
 
-  # Get the normalized mixture weights.
+  # Get the mixture weights. They should already be normalized, but
+  # normalize them just in case they aren't.
   w <- out$x
   w <- w/sum(w)
-  
+
   # Return the fitted model parameters and other info returned by the
   # optimization algorithm.
-  fit <-
-    list(L = L,w = w,obj = out$obj,maxd = out$maxd,timing = out$timing,
-         ipsolver = out[setdiff(names(out),c("max","timing","obj"))])
+  fit <- list(L = L,w = w,obj = unlist(out$opt.callback),maxd = out$maxd,
+              timing = out$timing,ipsolver = out[setdiff(names(out),
+                                                         c("max","timing"))])
   class(fit) <- c("mixopt.ip","list")
   return(fit)
 }

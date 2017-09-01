@@ -61,10 +61,10 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, d, J, mu, eps)
 #
 #   where Wi is the Hessian of the ith inequality constraint.
 #
-# There is an optional callback function, "callback", that accepts as
-# input the current primal variables (x) and dual variables (z). It is
-# called once per iteration and will save all output from this
-# function into a list.
+# There is an optional callback function, simply called
+# "opt.callback", that accepts as input the current primal variables
+# (x) and dual variables (z). It is called once per iteration and will
+# save all output from this function into a list.
 #
 # If you set "verbose" to true, then at each iteration the solver will
 # output the following information: (1) the iteration number; (2)
@@ -73,7 +73,7 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, d, J, mu, eps)
 # & rc; (5) the step size, (6) the number of iterations in the line
 # search before a suitable descent step was found, and (7) any output
 # provided by the optional callback function.
-ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
+ipsolver <- function (x, obj, grad, constr, jac, opt.callback = NULL,
                       A = NULL, b = NULL, tol = 1e-8, maxiter = 1e4,
                       newton.solve = "indef", eqc.tol = 1e-8,
                       verbose = TRUE) {
@@ -118,15 +118,15 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
   y <- rep(0,ne)
   
   # Initialize storage for the outputs.
-  out <- list(obj      = rep(0,maxiter),
-              maxd     = rep(0,maxiter),
-              mu       = rep(0,maxiter),
-              sigma    = rep(0,maxiter),
-              rx       = rep(0,maxiter),
-              rc       = rep(0,maxiter),
-              alpha    = rep(0,maxiter),
-              ls       = rep(0,maxiter),
-              callback = vector("list",maxiter))
+  out <- list(obj   = rep(0,maxiter),
+              maxd  = rep(0,maxiter),
+              mu    = rep(0,maxiter),
+              sigma = rep(0,maxiter),
+              rx    = rep(0,maxiter),
+              rc    = rep(0,maxiter),
+              alpha = rep(0,maxiter),
+              ls    = rep(0,maxiter),
+              opt.callback = vector("list",maxiter))
 
   # Initialize storage for the timings output.
   timing           <- matrix(0,maxiter,3)
@@ -189,8 +189,8 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
                   max(c(0,abs(A %*% x - b))),alpha,ls))
 
     # Execute the callback function, if provided.
-    if (!is.null(callback))
-      out$callback[[iter]] <- callback(x,z)
+    if (!is.null(opt.callback))
+      out$opt.callback[[iter]] <- opt.callback(x,z)
     
     # Save the status of the algorithm.
     out$obj[iter]   <- f
@@ -215,6 +215,8 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
 
     # SOLUTION TO PERTURBED KKT SYSTEM
     # --------------------------------
+    # Counter-intuitively, solving the full (indefinite) linear system
+    # seems to be more numerically stable in my experience.
     if (newton.solve == "posdef") {
 
       # Compute the search direction of x, y and z by solving the

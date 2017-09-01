@@ -180,11 +180,9 @@ individual iterations are more expensive, but it takes only a small
 number of iterations to converge to a solution.
 
 ```{r, ip}
-fit.ip.old <- mixopt.ip.old(L)
 out <- system.time(fit.ip <- mixopt.ip(L))
 cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
             length(fit.ip$maxd),out["elapsed"]))
-stop()
 ```
 
 ## Fit mixture model using IP solver---dual formulation
@@ -207,6 +205,17 @@ compare the output of the IP method to running
 
 ```{r rebayes, echo=TRUE, eval=FALSE}
 REBayes:KWDual(L,rep(1,k),rep(1,n))
+```
+
+## Compare the quality of the three solutions.
+
+The (primal) IP method gives us the best solution:
+
+```{r}
+print(t(t(c(EM     = min(fit.em$obj),
+            IP     = min(fit.ip$obj),
+            dualIP = fit.dualip$obj))),
+      digits = 12,right = FALSE)
 ```
 
 ## Plots showing improvement in EM & IP solutions over time
