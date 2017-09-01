@@ -16,6 +16,7 @@ ipsolver.gradmerit <- function (x, z, px, pz, g, d, J, mu, eps)
 #
 #     minimize    f(x)
 #     subject to  c(x) < 0,
+#                 Ax = b,
 #
 # where f(x) is a convex objective and c(x) is a vector-valued
 # function with outputs that are convex in x. There are many
@@ -166,7 +167,9 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
     # Compute the unperturbed Karush-Kuhn-Tucker optimality
     # conditions: rx is the dual residual and rc is the
     # complementarity.
-    rx <- g + drop(z %*% J + y %*% A)
+    rx <- g + drop(z %*% J)
+    if (ne > 0)
+      rx <- rx + drop(y %*% A)
     rc <- d*z
     r0 <- c(rx,rc)
 
@@ -217,9 +220,14 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       # Compute the search direction of x, y and z by solving the
       # symmetric positive definite (s.p.d.) linear system Mx = -gb.
       S  <- spdiag(z/(d - eps))
-      gb <- c(g - drop((mu/(d - eps)) %*% J - y %*% A),rep(0,ne))
-      M  <- rbind(cbind(H + W - t(J) %*% S %*% J, t(A)),
-                  cbind(A,                        spzeros(ne,ne)))
+      if (ne > 0) {
+        gb <- c(g - drop((mu/(d - eps)) %*% J - y %*% A),rep(0,ne))
+        M  <- rbind(cbind(H + W - t(J) %*% S %*% J, t(A)),
+                    cbind(A,                        spzeros(ne,ne)))
+      } else {
+        gb <- g - drop((mu/(d - eps)) %*% J)
+        M  <- H + W - t(J) %*% S %*% J
+      }
       p  <- drop(solve(forceSymmetric(M),-gb))
       px <- p[1:nv]
       py <- p[-(1:nv)]
@@ -248,9 +256,13 @@ ipsolver <- function (x, obj, grad, constr, jac, callback = NULL,
       # incomplete Choleksy factorization. However, it seems that this
       # might require a specialized method for solving for saddle
       # point points (see Benzi, Golub & Liesen, 2005, Acta Numerica).
-      M  <- rbind(cbind(H + W,  t(J),           t(A)),
-                  cbind(-z * J, spdiag(-d+eps), spzeros(nc,ne)),
-                  cbind(A,      spzeros(ne,nc), spzeros(ne,ne)))
+      if (ne > 0)
+        M <- rbind(cbind(H + W,  t(J),           t(A)),
+                   cbind(-z * J, spdiag(-d+eps), spzeros(nc,ne)),
+                   cbind(A,      spzeros(ne,nc), spzeros(ne,ne)))
+      else
+        M <- rbind(cbind(H + W,  t(J)),
+                   cbind(-z * J, spdiag(-d+eps)))          
       r  <- c(rx,-(rc + mu),rep(0,ne))
       p  <- drop(solve(M,-r))
       px <- p[1:nv]
