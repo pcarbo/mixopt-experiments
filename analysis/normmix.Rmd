@@ -180,9 +180,11 @@ individual iterations are more expensive, but it takes only a small
 number of iterations to converge to a solution.
 
 ```{r, ip}
+fit.ip.old <- mixopt.ip.old(L)
 out <- system.time(fit.ip <- mixopt.ip(L))
 cat(sprintf("Model fitting took %d iterations and %0.2f seconds.\n",
             length(fit.ip$maxd),out["elapsed"]))
+stop()
 ```
 
 ## Fit mixture model using IP solver---dual formulation

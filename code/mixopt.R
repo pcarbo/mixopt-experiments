@@ -104,21 +104,21 @@ mixopt.ip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
 
   # Get the number of mixture components.
   k <- ncol(L)
+  n <- nrow(L)
   
   # Solve the dual formulation using the primal-dual interior-point
   # algorithm. Note that the indefinite system for solving the Newton
   # step is very sparse, so we set newton.solve = "indef".
   out <- ipsolver(x = rep(1/k,k),tol = tol,maxiter = maxiter,
                   verbose = verbose,newton.solve = "indef",
-                  A = matrix(1,1,k),b = 1,
                   
                   # Objective.
-                  obj = function (x) mixopt.objective(L,x),
+                  obj = function (x) mixopt.objective(L,x) + n*sum(x),
 
                   # Gradient & Hessian of objective.
                   grad = function (x) {
                     y <- c(L %*% x)
-                    return(list(g = -colSums(L/(y + eps)),
+                    return(list(g = n - colSums(L/(y + eps)),
                                 H = diagsq(L,1/y)))
                   },
                   
@@ -129,11 +129,15 @@ mixopt.ip <- function (L, maxiter = 1e4, tol = 1e-8, verbose = TRUE) {
                   jac = function (x, z)
                     list(J = -speye(k),
                          W = spzeros(k,k)))
+
+  # Get the normalized mixture weights.
+  w <- out$x
+  w <- w/sum(w)
   
   # Return the fitted model parameters and other info returned by the
   # optimization algorithm.
   fit <-
-    list(L = L,w = out$x,obj = out$obj,maxd = out$maxd,timing = out$timing,
+    list(L = L,w = w,obj = out$obj,maxd = out$maxd,timing = out$timing,
          ipsolver = out[setdiff(names(out),c("max","timing","obj"))])
   class(fit) <- c("mixopt.ip","list")
   return(fit)
